@@ -390,8 +390,8 @@ footer.site-footer{
    - SUPABASE_ANON_KEY: публичный anon-ключ (его безопасно использовать в браузере)
    Пока не вставите свои данные — сайт покажет демонстрационные товары.
    ========================================================================= */
-const SUPABASE_URL = 'https://ВАШ-ПРОЕКТ.supabase.co';
-const SUPABASE_ANON_KEY = 'ВАШ-ANON-KEY';
+const SUPABASE_URL = 'https://bvficjnzthofqmekdmlx.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ2Zmljam56dGhvZnFtZWtkbWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1MTAxMzgsImV4cCI6MjA5OTA4NjEzOH0.4mb2huQplJVHd1JctJnw2eNoqvJbJtwB3-3Y38exSL8';
 const supabaseConfigured = !SUPABASE_URL.includes('ВАШ-ПРОЕКТ');
 const supabaseClient = supabaseConfigured
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
@@ -1089,3 +1089,4 @@ init();
 </script>
 </body>
 </html>
+
