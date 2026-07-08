@@ -167,6 +167,14 @@ main{background:var(--white);min-height:60vh;}
   overflow:hidden;
 }
 .product-detail-img img{width:100%;height:100%;object-fit:cover;}
+.thumb-strip{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+.thumb-strip-item{
+  width:56px;height:56px;border-radius:8px;overflow:hidden;cursor:pointer;
+  border:2px solid transparent;opacity:0.75;
+}
+.thumb-strip-item img{width:100%;height:100%;object-fit:cover;display:block;}
+.thumb-strip-item:hover{opacity:1;}
+.thumb-strip-item.selected{border-color:var(--accent);opacity:1;}
 .product-detail-info h1{font-size:24px;margin:0 0 8px;}
 .product-detail-info .price{font-size:22px;font-weight:700;margin-bottom:14px;}
 .field-label{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;color:var(--text-muted);margin:18px 0 8px;}
@@ -521,7 +529,7 @@ function buildDemoProducts(){
         category: cat.id,
         modelIndex: i,
         icon: cat.icon,     // эмодзи-заглушка вместо фото
-        image_url: null,
+        images: [], // демо-товары фото не имеют — используется эмодзи-заглушка
         price: 300 + (id*17)%700,
         inStock: (id % 4) !== 0,
         colors: COLORS,
@@ -533,7 +541,7 @@ function buildDemoProducts(){
 }
 
 // Загрузка товаров из таблицы "products" в Supabase.
-// Ожидаемые колонки таблицы: id, category, name_ru, name_ua, price, in_stock, image_url, colors (jsonb, необязательно)
+// Ожидаемые колонки таблицы: id, category, name_ru, name_ua, price, in_stock, image_urls (текст, ссылки через запятую), colors (jsonb, необязательно)
 async function loadProducts(){
   if(!supabaseConfigured){
     console.warn('Supabase не настроен — показаны демонстрационные товары. Вставьте SUPABASE_URL и SUPABASE_ANON_KEY в коде.');
@@ -548,17 +556,27 @@ async function loadProducts(){
 
     if(error) throw error;
 
-    PRODUCTS = (data||[]).map(row=>({
-      id: row.id,
-      category: row.category,
-      name_ru: row.name_ru,
-      name_ua: row.name_ua,
-      icon: (CATEGORIES.find(c=>c.id===row.category)||{}).icon || '🛍️', // запасной значок, если фото ещё не загружено
-      image_url: row.image_url || null,
-      price: row.price,
-      inStock: row.in_stock,
-      colors: (row.colors && row.colors.length ? row.colors : COLORS),
-    }));
+    PRODUCTS = (data||[]).map(row=>{
+      // собираем список фото товара: сначала пробуем новую колонку image_urls (через запятую),
+      // если её нет — используем старую одиночную image_url для обратной совместимости
+      let images = [];
+      if(row.image_urls){
+        images = row.image_urls.split(',').map(s=>s.trim()).filter(Boolean);
+      } else if(row.image_url){
+        images = [row.image_url];
+      }
+      return {
+        id: row.id,
+        category: row.category,
+        name_ru: row.name_ru,
+        name_ua: row.name_ua,
+        icon: (CATEGORIES.find(c=>c.id===row.category)||{}).icon || '🛍️', // запасной значок, если фото ещё не загружено
+        images: images,
+        price: row.price,
+        inStock: row.in_stock,
+        colors: (row.colors && row.colors.length ? row.colors : COLORS),
+      };
+    });
 
     // если в таблице пока нет ни одной строки — покажем демо-товары, чтобы сайт не выглядел пустым
     if(PRODUCTS.length===0){
@@ -571,9 +589,9 @@ async function loadProducts(){
   }
 }
 
-// картинка товара: если есть image_url — показываем фото, иначе эмодзи-заглушку
+// картинка товара (первое фото из списка): если есть images — показываем фото, иначе эмодзи-заглушку
 function productThumbHTML(p){
-  return p.image_url ? `<img src="${p.image_url}" alt="">` : p.icon;
+  return (p.images && p.images.length) ? `<img src="${p.images[0]}" alt="">` : p.icon;
 }
 
 /* =========================================================================
@@ -587,6 +605,7 @@ let currentSearch = '';
 let currentProductId = null;
 let currentColorIndex = 0;
 let currentQty = 1;
+let currentImageIndex = 0; // индекс текущего показанного фото в галерее товара
 let currentFavModalProduct = null;
 let usedOrderNumbers = new Set(); // чтобы номера заказов никогда не повторялись
 
@@ -862,6 +881,7 @@ function openProduct(productId){
   currentProductId = productId;
   currentColorIndex = 0;
   currentQty = 1;
+  currentImageIndex = 0;
   renderProductPage();
   showView('viewProduct');
 }
@@ -875,7 +895,22 @@ function renderProductPage(){
   el.innerHTML = `
     <a href="#" class="back-link" onclick="event.preventDefault();showCatalog(currentCategory)">${t('back')}</a>
     <div class="product-detail">
-      <div class="product-detail-img">${productThumbHTML(p)}</div>
+      <div>
+        <div class="product-detail-img">${
+          (p.images && p.images.length)
+            ? `<img src="${p.images[currentImageIndex]}" alt="">`
+            : p.icon
+        }</div>
+        ${(p.images && p.images.length > 1) ? `
+          <div class="thumb-strip">
+            ${p.images.map((img,i)=>`
+              <div class="thumb-strip-item ${i===currentImageIndex?'selected':''}" onclick="selectImage(${i})">
+                <img src="${img}" alt="">
+              </div>
+            `).join('')}
+          </div>
+        ` : ''}
+      </div>
       <div class="product-detail-info">
         <h1>${productName(p)}</h1>
         <div class="price">${p.price} ₴</div>
@@ -907,6 +942,7 @@ function renderProductPage(){
 }
 
 function selectColor(i){ currentColorIndex = i; renderProductPage(); }
+function selectImage(i){ currentImageIndex = i; renderProductPage(); }
 function changeQty(delta){
   currentQty = Math.max(1, currentQty + delta);
   document.getElementById('qtyVal').textContent = currentQty;
@@ -1089,4 +1125,3 @@ init();
 </script>
 </body>
 </html>
-
