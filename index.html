@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>nui.shooo — магазин аксессуаров</title>
+<style>
+/* ==================== ПЕРЕМЕННЫЕ И БАЗОВЫЕ СТИЛИ ==================== */
+:root{
+  --graphite: #1c1c1e;      /* основной графитовый/чёрный цвет шапки и подвала */
+  --graphite-light: #2a2a2d;
+  --white: #ffffff;         /* фон страницы с товарами */
+  --off-white: #f7f7f5;
+  --accent: #e0a940;        /* тёплый акцент, взят из цветов логотипа */
+  --accent-soft: #f4d9a0;
+  --text-dark: #1c1c1e;
+  --text-muted: #8a8a8e;
+  --danger: #c0392b;
+  --ok: #3c8a53;
+  --radius: 14px;
+  --shadow: 0 4px 18px rgba(0,0,0,0.08);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--white);color:var(--text-dark);-webkit-tap-highlight-color:transparent;}
+body{padding-bottom:40px;}
+img{max-width:100%;display:block;}
+a{color:inherit;text-decoration:none;}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;}
+input,select{font-family:inherit;}
+.hidden{display:none !important;}
+.container{max-width:1200px;margin:0 auto;padding:0 20px;}
+
+/* ==================== ШАПКА САЙТА ==================== */
+header.site-header{
+  background: linear-gradient(180deg,var(--graphite),var(--graphite-light));
+  color:#fff;
+  position:sticky;top:0;z-index:100;
+  box-shadow:0 2px 10px rgba(0,0,0,0.25);
+}
+.header-top{
+  display:flex;align-items:center;gap:16px;
+  padding:12px 20px;max-width:1200px;margin:0 auto;
+  flex-wrap:wrap;
+}
+.logo-btn{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.logo-btn img{width:46px;height:46px;border-radius:50%;background:#fff;object-fit:cover;}
+.logo-btn span{font-weight:700;font-size:18px;letter-spacing:0.5px;color:#fff;}
+
+/* поиск */
+.search-wrap{flex:1 1 220px;min-width:160px;max-width:420px;position:relative;}
+.search-wrap input{
+  width:100%;padding:10px 14px 10px 38px;border-radius:20px;border:1px solid #444;
+  background:#2f2f32;color:#fff;font-size:14px;outline:none;
+}
+.search-wrap input::placeholder{color:#9a9a9e;}
+.search-wrap input:focus{border-color:var(--accent);}
+.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);opacity:0.7;font-size:14px;}
+
+/* правая часть шапки - навигация с выпадающими меню */
+.nav-actions{display:flex;align-items:center;gap:4px;margin-left:auto;flex-wrap:wrap;}
+.nav-item{position:relative;}
+.nav-btn{
+  padding:9px 12px;font-size:14px;border-radius:10px;color:#eee;
+  display:flex;align-items:center;gap:6px;white-space:nowrap;
+  transition:background 0.15s;
+}
+.nav-btn:hover{background:rgba(255,255,255,0.08);}
+.icon-btn{position:relative;padding:9px 10px;font-size:19px;border-radius:10px;display:flex;align-items:center;}
+.icon-btn:hover{background:rgba(255,255,255,0.08);}
+.icon-btn svg{width:22px;height:22px;}
+.badge{
+  position:absolute;top:0px;right:0px;background:var(--accent);color:#1c1c1e;
+  font-size:10px;font-weight:700;min-width:16px;height:16px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;padding:0 3px;
+}
+
+/* переключатель языка RU / UA */
+.lang-switch{display:flex;gap:2px;background:#2f2f32;border-radius:8px;padding:2px;margin-right:4px;}
+.lang-btn{padding:6px 10px;font-size:12px;font-weight:700;border-radius:6px;color:#aaa;}
+.lang-btn.active{background:var(--accent);color:#1c1c1e;}
+
+/* выпадающие панели (dropdown) */
+.dropdown{
+  position:absolute;top:calc(100% + 8px);right:0;background:#fff;color:var(--text-dark);
+  border-radius:var(--radius);box-shadow:var(--shadow);min-width:230px;
+  padding:14px;z-index:200;
+}
+.dropdown.left{left:0;right:auto;}
+.dropdown.wide{min-width:280px;}
+.dropdown a, .dropdown button.link{display:block;padding:8px 10px;border-radius:8px;font-size:14px;}
+.dropdown a:hover, .dropdown button.link:hover{background:var(--off-white);}
+.dropdown-title{font-size:12px;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);padding:4px 10px 8px;}
+
+/* меню каталога — сетка категорий */
+.catalog-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px 10px;}
+
+/* контакты dropdown */
+.contact-line{display:flex;align-items:center;gap:8px;padding:8px 10px;font-size:14px;}
+.insta-link{display:flex;align-items:center;gap:8px;padding:8px 10px;font-size:14px;margin-top:4px;border-top:1px solid #eee;}
+
+/* ==================== ПОЛОСА КАТЕГОРИЙ (круглые иконки) ==================== */
+.cat-strip{
+  background:var(--off-white);
+  border-bottom:1px solid #ececec;
+  overflow-x:auto;
+  scrollbar-width:none;
+}
+.cat-strip::-webkit-scrollbar{display:none;}
+.cat-strip-inner{display:flex;gap:22px;padding:16px 20px;max-width:1200px;margin:0 auto;}
+.cat-circle{
+  display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;
+  width:72px;font-size:12px;color:var(--text-dark);text-align:center;
+}
+.cat-circle .circle{
+  width:56px;height:56px;border-radius:50%;background:#fff;border:1.5px solid #e2e2e2;
+  display:flex;align-items:center;justify-content:center;font-size:24px;
+  transition:transform 0.15s, border-color 0.15s;
+}
+.cat-circle:hover .circle{border-color:var(--accent);transform:translateY(-2px);}
+.cat-circle.active .circle{border-color:var(--accent);background:var(--accent-soft);}
+
+/* ==================== ОСНОВНОЙ КОНТЕНТ ==================== */
+main{background:var(--white);min-height:60vh;}
+.section-title{
+  font-size:22px;font-weight:700;padding:24px 0 6px;
+}
+.section-sub{color:var(--text-muted);font-size:14px;padding-bottom:14px;}
+
+/* сетка товаров */
+.product-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:18px;padding:10px 0 30px;
+}
+.product-card{
+  background:#fff;border:1px solid #ececec;border-radius:var(--radius);overflow:hidden;
+  transition:box-shadow 0.15s, transform 0.15s;position:relative;
+}
+.product-card:hover{box-shadow:var(--shadow);transform:translateY(-2px);}
+.product-thumb{
+  aspect-ratio:1/1;background:linear-gradient(135deg,var(--off-white),#eee);
+  display:flex;align-items:center;justify-content:center;font-size:46px;cursor:pointer;
+  overflow:hidden;
+}
+.product-thumb img{width:100%;height:100%;object-fit:cover;} /* реальное фото товара из Supabase Storage */
+.loading-state{padding:60px 0;text-align:center;color:var(--text-muted);}
+.fav-toggle{
+  position:absolute;top:10px;right:10px;background:rgba(255,255,255,0.9);
+  width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:16px;color:#bbb;box-shadow:0 1px 4px rgba(0,0,0,0.15);
+}
+.fav-toggle.active{color:#1c1c1e;}
+.product-info{padding:12px 14px 14px;cursor:pointer;}
+.product-name{font-size:14px;font-weight:600;margin-bottom:4px;line-height:1.3;}
+.product-price{font-size:15px;font-weight:700;color:var(--text-dark);}
+.stock{font-size:12px;margin-top:6px;font-weight:600;}
+.stock.in{color:var(--ok);}
+.stock.out{color:var(--danger);}
+
+/* ==================== СТРАНИЦА ТОВАРА ==================== */
+.product-page{padding:24px 0 40px;}
+.back-link{display:inline-flex;align-items:center;gap:6px;color:var(--text-muted);font-size:14px;margin-bottom:14px;}
+.product-detail{display:grid;grid-template-columns:1fr 1fr;gap:40px;}
+@media(max-width:760px){.product-detail{grid-template-columns:1fr;gap:20px;}}
+.product-detail-img{
+  aspect-ratio:1/1;background:linear-gradient(135deg,var(--off-white),#eee);border-radius:var(--radius);
+  display:flex;align-items:center;justify-content:center;font-size:90px;position:relative;
+  overflow:hidden;
+}
+.product-detail-img img{width:100%;height:100%;object-fit:cover;}
+.product-detail-info h1{font-size:24px;margin:0 0 8px;}
+.product-detail-info .price{font-size:22px;font-weight:700;margin-bottom:14px;}
+.field-label{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;color:var(--text-muted);margin:18px 0 8px;}
+.color-options{display:flex;gap:10px;flex-wrap:wrap;}
+.color-dot{
+  width:34px;height:34px;border-radius:50%;border:2px solid transparent;cursor:pointer;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,0.1);
+}
+.color-dot.selected{border-color:var(--accent);}
+.qty-row{display:flex;align-items:center;gap:12px;}
+.qty-btn{width:34px;height:34px;border:1px solid #ddd;border-radius:8px;font-size:16px;}
+.qty-val{min-width:24px;text-align:center;font-weight:600;}
+.buy-row{display:flex;gap:12px;margin-top:22px;align-items:center;}
+.btn{
+  padding:13px 24px;border-radius:10px;font-weight:700;font-size:14px;transition:opacity 0.15s;
+}
+.btn:hover{opacity:0.85;}
+.btn-primary{background:var(--graphite);color:#fff;}
+.btn-primary[disabled]{background:#ccc;cursor:not-allowed;}
+.btn-outline{background:#fff;border:1.5px solid var(--graphite);color:var(--graphite);}
+.btn-accent{background:var(--accent);color:#1c1c1e;}
+.heart-big{width:48px;height:48px;border-radius:50%;border:1.5px solid #ddd;display:flex;align-items:center;justify-content:center;font-size:20px;color:#bbb;}
+.heart-big.active{color:#1c1c1e;border-color:#1c1c1e;}
+
+/* ==================== КОРЗИНА ==================== */
+.cart-page{padding:24px 0 40px;}
+.cart-item{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid #eee;align-items:center;}
+.cart-item .thumb{width:70px;height:70px;border-radius:10px;background:var(--off-white);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;overflow:hidden;}
+.cart-item .thumb img{width:100%;height:100%;object-fit:cover;}
+.cart-item-info{flex:1;}
+.cart-item-info .name{font-weight:600;font-size:14px;}
+.cart-item-info .meta{font-size:12px;color:var(--text-muted);margin-top:2px;}
+.cart-item .remove{color:var(--danger);font-size:13px;}
+.cart-total{display:flex;justify-content:space-between;align-items:center;padding:20px 0;font-size:18px;font-weight:700;}
+.empty-state{padding:60px 0;text-align:center;color:var(--text-muted);}
+
+/* ==================== ОФОРМЛЕНИЕ ЗАКАЗА ==================== */
+.checkout-form{max-width:480px;display:flex;flex-direction:column;gap:12px;padding:10px 0 30px;}
+.checkout-form input, .checkout-form select{
+  padding:12px 14px;border:1px solid #ddd;border-radius:10px;font-size:14px;width:100%;
+}
+.pay-option{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid #ddd;border-radius:10px;font-size:14px;}
+.pay-option input{width:auto;}
+
+/* ==================== ИЗБРАННОЕ ==================== */
+.fav-lists{display:flex;gap:10px;flex-wrap:wrap;padding:10px 0 20px;}
+.fav-list-chip{padding:9px 16px;border:1px solid #ddd;border-radius:20px;font-size:13px;font-weight:600;}
+.fav-list-chip.active{background:var(--graphite);color:#fff;border-color:var(--graphite);}
+.new-list-row{display:flex;gap:8px;padding:6px 0 20px;}
+.new-list-row input{flex:1;padding:10px 12px;border:1px solid #ddd;border-radius:10px;}
+
+/* ==================== О НАС ==================== */
+.about-page{padding:30px 0 50px;max-width:760px;}
+.about-page h1{font-size:26px;margin-bottom:14px;}
+.about-page p{line-height:1.7;color:#333;margin-bottom:14px;}
+.about-page h2{font-size:18px;margin-top:26px;}
+
+/* ==================== ПОДВАЛ ==================== */
+footer.site-footer{
+  background:var(--graphite);color:#eee;margin-top:40px;padding:36px 20px 24px;
+}
+.footer-inner{max-width:1200px;margin:0 auto;display:flex;flex-wrap:wrap;gap:30px;justify-content:space-between;}
+.footer-col h4{font-size:13px;text-transform:uppercase;letter-spacing:0.5px;color:#9a9a9e;margin-bottom:12px;}
+.footer-col a, .footer-col button.link{display:block;color:#ddd;font-size:14px;margin-bottom:8px;}
+.footer-col a:hover{color:var(--accent);}
+.footer-bottom{max-width:1200px;margin:24px auto 0;padding-top:16px;border-top:1px solid #333;font-size:12px;color:#7a7a7e;text-align:center;}
+
+/* ==================== МОДАЛЬНЫЕ ОКНА (избранное / подтверждение заказа) ==================== */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(20,20,20,0.55);z-index:500;
+  display:flex;align-items:center;justify-content:center;padding:20px;
+}
+.modal-box{
+  background:#fff;border-radius:var(--radius);padding:24px;max-width:380px;width:100%;
+  box-shadow:0 20px 60px rgba(0,0,0,0.3);
+}
+.modal-box h3{margin:0 0 14px;font-size:18px;}
+.modal-list{max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:2px;margin-bottom:8px;}
+.modal-list-item{display:flex;align-items:center;gap:10px;padding:9px 6px;border-radius:8px;font-size:14px;}
+.modal-list-item:hover{background:var(--off-white);}
+.modal-list-item input{width:16px;height:16px;}
+
+/* ==================== ВСПОМОГАТЕЛЬНОЕ ==================== */
+@media(max-width:640px){
+  .header-top{gap:8px;}
+  .logo-btn span{display:none;}
+  .search-wrap{order:3;flex-basis:100%;max-width:100%;}
+  .nav-btn span.txt{display:none;}
+}
+</style>
+</head>
+<body>
+
+<!-- ==================== ШАПКА ==================== -->
+<header class="site-header">
+  <div class="header-top">
+    <!-- логотип: клик возвращает на главную -->
+    <button class="logo-btn" onclick="goHome()">
+      <img src="assets/logo.png" alt="nui.shooo">
+      <span>nui.shooo</span>
+    </button>
+
+    <!-- поиск по названию товара -->
+    <div class="search-wrap">
+      <span class="search-icon">🔎</span>
+      <input id="searchInput" type="text" placeholder="Поиск товара..." oninput="onSearch(this.value)">
+    </div>
+
+    <div class="nav-actions">
+      <!-- переключатель языка -->
+      <div class="lang-switch">
+        <button class="lang-btn" id="langRuBtn" onclick="setLang('ru')">RU</button>
+        <button class="lang-btn" id="langUaBtn" onclick="setLang('ua')">UA</button>
+      </div>
+
+      <!-- каталог с категориями -->
+      <div class="nav-item">
+        <button class="nav-btn" onclick="toggleDropdown('catalogDD')">☰ <span class="txt" id="navCatalogTxt">Каталог</span></button>
+        <div class="dropdown wide hidden" id="catalogDD">
+          <div class="dropdown-title" id="ddCatTitle">Категории</div>
+          <div class="catalog-grid" id="catalogGrid"></div>
+          <a href="#" id="ddAllLink" onclick="event.preventDefault();showCatalog('all');closeDropdowns();">Все товары →</a>
+        </div>
+      </div>
+
+      <!-- про нас -->
+      <div class="nav-item">
+        <button class="nav-btn" onclick="showAbout()"><span class="txt" id="navAboutTxt">Про нас</span></button>
+      </div>
+
+      <!-- контакты (без значка телефона) -->
+      <div class="nav-item">
+        <button class="nav-btn" onclick="toggleDropdown('contactsDD')"><span class="txt" id="navContactsTxt">Контакты</span></button>
+        <div class="dropdown hidden" id="contactsDD">
+          <div class="dropdown-title" id="ddPhonesTitle">Телефоны</div>
+          <div class="contact-line">+380 (00) 000-00-01</div>
+          <div class="contact-line">+380 (00) 000-00-02</div>
+          <div class="contact-line">+380 (00) 000-00-03</div>
+          <div class="contact-line">Telegram: @nui_shooo</div>
+          <a class="insta-link" href="https://www.instagram.com/nui.shooo?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" target="_blank" rel="noopener">
+            Instagram: nui.shooo
+          </a>
+        </div>
+      </div>
+
+      <!-- избранное -->
+      <div class="nav-item">
+        <button class="icon-btn" onclick="showFavorites()">
+          <!-- иконка сердца -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7.5-4.7-10-9.3C.5 8.4 2.3 5 5.8 5c2 0 3.4 1 4.2 2.3C10.8 6 12.2 5 14.2 5c3.5 0 5.3 3.4 3.8 6.7C19.5 16.3 12 21 12 21z"/></svg>
+          <span class="badge hidden" id="favBadge">0</span>
+        </button>
+      </div>
+
+      <!-- корзина: иконка продуктовой тележки -->
+      <div class="nav-item">
+        <button class="icon-btn" onclick="showCart()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="9" cy="20" r="1.4" fill="currentColor" stroke="none"/>
+            <circle cx="17" cy="20" r="1.4" fill="currentColor" stroke="none"/>
+            <path d="M2.5 3h2l2.2 11.4a2 2 0 0 0 2 1.6h7.9a2 2 0 0 0 2-1.6L21 7H6"/>
+          </svg>
+          <span class="badge hidden" id="cartBadge">0</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ==================== ПОЛОСА КАТЕГОРИЙ (круглые иконки) ==================== -->
+<nav class="cat-strip">
+  <div class="cat-strip-inner" id="catStrip"></div>
+</nav>
+
+<!-- ==================== ОСНОВНОЙ КОНТЕНТ ==================== -->
+<main class="container">
+
+  <!-- страница каталога / товаров -->
+  <section id="viewCatalog">
+    <div class="section-title" id="catalogTitle">Все товары</div>
+    <div class="section-sub" id="catalogSub">Быстрый путь от просмотра до покупки</div>
+    <div class="product-grid" id="productGrid"></div>
+  </section>
+
+  <!-- страница товара -->
+  <section id="viewProduct" class="product-page hidden"></section>
+
+  <!-- корзина -->
+  <section id="viewCart" class="cart-page hidden"></section>
+
+  <!-- оформление заказа -->
+  <section id="viewCheckout" class="hidden"></section>
+
+  <!-- избранное -->
+  <section id="viewFavorites" class="hidden"></section>
+
+  <!-- про нас -->
+  <section id="viewAbout" class="about-page hidden"></section>
+
+</main>
+
+<!-- ==================== ПОДВАЛ ==================== -->
+<footer class="site-footer">
+  <div class="footer-inner" id="footerInner"></div>
+  <div class="footer-bottom" id="footerBottom">© 2026 nui.shooo. Все права защищены.</div>
+</footer>
+
+<!-- ==================== МОДАЛЬНОЕ ОКНО (избранное / заказ) ==================== -->
+<div class="modal-overlay hidden" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box" id="modalBox"></div>
+</div>
+
+<!-- Библиотека Supabase — нужна, чтобы сайт мог получать товары из вашей базы -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+<script>
+/* =========================================================================
+   ПОДКЛЮЧЕНИЕ SUPABASE
+   Вставьте сюда данные вашего проекта (Supabase → Settings → API):
+   - SUPABASE_URL: адрес вида https://xxxxx.supabase.co
+   - SUPABASE_ANON_KEY: публичный anon-ключ (его безопасно использовать в браузере)
+   Пока не вставите свои данные — сайт покажет демонстрационные товары.
+   ========================================================================= */
+const SUPABASE_URL = 'https://ВАШ-ПРОЕКТ.supabase.co';
+const SUPABASE_ANON_KEY = 'ВАШ-ANON-KEY';
+const supabaseConfigured = !SUPABASE_URL.includes('ВАШ-ПРОЕКТ');
+const supabaseClient = supabaseConfigured
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
+
+/* =========================================================================
+   ЯЗЫК ИНТЕРФЕЙСА (RU / UA) И СЛОВАРЬ ТЕКСТОВ
+   ========================================================================= */
+let LANG = 'ru';
+
+const STR = {
+  ru:{
+    catalog:'Каталог', categoriesTitle:'Категории', allProductsLink:'Все товары →', aboutUs:'Про нас', contacts:'Контакты',
+    phonesTitle:'Телефоны', searchPlaceholder:'Поиск товара...',
+    allProducts:'Все товары', fastPath:'Быстрый путь от просмотра до покупки',
+    searchResults:'Результаты поиска', notFound:'Ничего не найдено — попробуйте другой запрос',
+    inStock:'В наличии', outStock:'Нет в наличии',
+    addToList:'Добавить в список', newListPlaceholder:'Название нового списка...', create:'Создать', done:'Готово',
+    favoritesTitle:'Избранное', cartTitle:'Корзина', favSub:'Создавайте свои подборки, например «На зиму» или «Футболки»',
+    emptyList:'В этом списке пока пусто',
+    back:'← Назад в каталог', color:'Цвет', quantity:'Количество', buy:'Купить', outOfStockBtn:'Нет в наличии',
+    emptyCart:'Ваша корзина пуста', goShopping:'Перейти к покупкам',
+    total:'Итого', checkoutBtn:'Оформить заказ', remove:'Удалить',
+    checkoutTitle:'Оформление заказа', checkoutSub:'Заполните данные для доставки Новой почтой',
+    name:'Имя', surname:'Фамилия', phone:'Номер телефона', region:'Область', city:'Город', branch:'Отделение Новой почты (номер)',
+    paymentMethod:'Способ оплаты', cod:'Оплата при получении', transfer:'Перевод по реквизитам', confirmOrder:'Подтвердить заказ',
+    thankYou:'Спасибо за заказ!', orderNumberLabel:'Номер заказа', weWillContact:'Мы свяжемся с вами для подтверждения.', ok:'Хорошо',
+    aboutTitle:'Про nui.shooo',
+    aboutP1:'nui.shooo — магазин аксессуаров: шапки, кепки, сумки, перчатки, ремни, кошельки, рюкзаки, брелки, носки и шоперы. Мы создаём вещи, которые легко выбрать и приятно носить каждый день.',
+    returnTitle:'Возврат и обмен',
+    aboutP2:'Если размер или модель не подошли — вещь можно обменять или вернуть в течение 14 дней с момента получения заказа. Товар должен быть в оригинальном виде, без следов использования, с сохранёнными бирками и упаковкой.',
+    aboutP3:'Для оформления обмена или возврата свяжитесь с нами любым удобным способом — по телефону, в Telegram или Instagram (ссылки в разделе «Контакты»). Мы поможем подобрать нужный размер или вернём стоимость товара удобным для вас способом.',
+    deliveryTitle:'Доставка',
+    aboutP4:'Отправляем заказы Новой почтой по всей Украине. Доступна оплата при получении или перевод по реквизитам.',
+    footerShop:'Магазин', footerReviews:'Отзывы', footerSocials:'Соц. сети', footerReviewsInsta:'Отзывы в Instagram', footerTelegramChannel:'Telegram-канал',
+    footerBrandTagline:'Аксессуары, которые легко выбрать и приятно носить.', footerRights:'© 2026 nui.shooo. Все права защищены.',
+    telegramLine:'Telegram: @nui_shooo',
+  },
+  ua:{
+    catalog:'Каталог', categoriesTitle:'Категорії', allProductsLink:'Усі товари →', aboutUs:'Про нас', contacts:'Контакти',
+    phonesTitle:'Телефони', searchPlaceholder:'Пошук товару...',
+    allProducts:'Усі товари', fastPath:'Швидкий шлях від перегляду до покупки',
+    searchResults:'Результати пошуку', notFound:'Нічого не знайдено — спробуйте інший запит',
+    inStock:'В наявності', outStock:'Немає в наявності',
+    addToList:'Додати до списку', newListPlaceholder:'Назва нового списку...', create:'Створити', done:'Готово',
+    favoritesTitle:'Обране', cartTitle:'Кошик', favSub:'Створюйте власні добірки, наприклад «На зиму» або «Футболки»',
+    emptyList:'У цьому списку поки що порожньо',
+    back:'← Назад до каталогу', color:'Колір', quantity:'Кількість', buy:'Купити', outOfStockBtn:'Немає в наявності',
+    emptyCart:'Ваш кошик порожній', goShopping:'Перейти до покупок',
+    total:'Разом', checkoutBtn:'Оформити замовлення', remove:'Видалити',
+    checkoutTitle:'Оформлення замовлення', checkoutSub:'Заповніть дані для доставки Новою поштою',
+    name:'Ім\u0027я', surname:'Прізвище', phone:'Номер телефону', region:'Область', city:'Місто', branch:'Відділення Нової пошти (номер)',
+    paymentMethod:'Спосіб оплати', cod:'Оплата при отриманні', transfer:'Переказ за реквізитами', confirmOrder:'Підтвердити замовлення',
+    thankYou:'Дякуємо за замовлення!', orderNumberLabel:'Номер замовлення', weWillContact:'Ми зв\u0027яжемося з вами для підтвердження.', ok:'Добре',
+    aboutTitle:'Про nui.shooo',
+    aboutP1:'nui.shooo — магазин аксесуарів: шапки, кепки, сумки, рукавички, ремені, гаманці, рюкзаки, брелоки, шкарпетки та шопери. Ми створюємо речі, які легко обрати і приємно носити щодня.',
+    returnTitle:'Повернення та обмін',
+    aboutP2:'Якщо розмір або модель не підійшли — річ можна обміняти або повернути протягом 14 днів з моменту отримання замовлення. Товар має бути в оригінальному вигляді, без слідів використання, зі збереженими бірками та упаковкою.',
+    aboutP3:'Для оформлення обміну чи повернення зв\u0027яжіться з нами будь-яким зручним способом — телефоном, у Telegram або Instagram (посилання у розділі «Контакти»). Ми допоможемо підібрати потрібний розмір або повернемо вартість товару зручним для вас способом.',
+    deliveryTitle:'Доставка',
+    aboutP4:'Надсилаємо замовлення Новою поштою по всій Україні. Доступна оплата при отриманні або переказ за реквізитами.',
+    footerShop:'Магазин', footerReviews:'Відгуки', footerSocials:'Соц. мережі', footerReviewsInsta:'Відгуки в Instagram', footerTelegramChannel:'Telegram-канал',
+    footerBrandTagline:'Аксесуари, які легко обрати і приємно носити.', footerRights:'© 2026 nui.shooo. Усі права захищені.',
+    telegramLine:'Telegram: @nui_shooo',
+  }
+};
+
+// короткая функция доступа к переводу текущего языка
+function t(key){ return STR[LANG][key]; }
+
+/* =========================================================================
+   ДАННЫЕ МАГАЗИНА
+   Примечание: изображения товаров заменены эмодзи-плейсхолдерами —
+   при реальном запуске сайта достаточно заменить их на <img src="...">
+   ========================================================================= */
+
+// список категорий: id, название (ru/ua), эмодзи-иконка для круглой кнопки
+const CATEGORIES = [
+  {id:'hats',     name:'Шапки',    name_ua:'Шапки',      icon:'🧢'},
+  {id:'caps',     name:'Кепки',    name_ua:'Кепки',      icon:'🧢'},
+  {id:'bags',     name:'Сумки',    name_ua:'Сумки',      icon:'👜'},
+  {id:'gloves',   name:'Перчатки', name_ua:'Рукавички',  icon:'🧤'},
+  {id:'belts',    name:'Ремни',    name_ua:'Ремені',     icon:'➰'},
+  {id:'wallets',  name:'Кошельки', name_ua:'Гаманці',    icon:'👛'},
+  {id:'backpacks',name:'Рюкзаки',  name_ua:'Рюкзаки',    icon:'🎒'},
+  {id:'keychains',name:'Брелки',   name_ua:'Брелоки',    icon:'🔑'},
+  {id:'socks',    name:'Носки',    name_ua:'Шкарпетки',  icon:'🧦'},
+  {id:'shoppers', name:'Шоперы',   name_ua:'Шопери',     icon:'🛍️'},
+];
+
+function catName(catId){
+  const c = CATEGORIES.find(x=>x.id===catId);
+  if(!c) return t('allProducts');
+  return LANG==='ua' ? c.name_ua : c.name;
+}
+
+// цвета для выбора на странице товара (ru/ua названия + hex для кружка)
+const COLORS = [
+  {name:'Чёрный', name_ua:'Чорний',  hex:'#1c1c1e'},
+  {name:'Графит', name_ua:'Графіт',  hex:'#5a5a5e'},
+  {name:'Бежевый', name_ua:'Бежевий', hex:'#d8c9ab'},
+  {name:'Белый', name_ua:'Білий',    hex:'#ffffff'},
+];
+function colorName(c){ return LANG==='ua' ? c.name_ua : c.name; }
+
+// Товары. Изначально пусто — заполняются либо из Supabase, либо демо-данными (см. loadProducts).
+let PRODUCTS = [];
+
+// Название товара: если в Supabase задано своё название (name_ru/name_ua) — используем его,
+// иначе строим авто-название из категории и номера модели (для демо-товаров).
+function productName(p){
+  if(LANG==='ua' && p.name_ua) return p.name_ua;
+  if(LANG==='ru' && p.name_ru) return p.name_ru;
+  if(p.name_ru) return p.name_ru; // запасной вариант, если перевода нет
+  return catName(p.category) + ' — модель ' + (p.modelIndex || 1);
+}
+
+// демонстрационные товары — показываются, пока не подключена Supabase,
+// либо если запрос к базе не удался (например, нет интернета)
+function buildDemoProducts(){
+  let list = [];
+  let id = 1;
+  CATEGORIES.forEach(cat=>{
+    for(let i=1;i<=4;i++){
+      list.push({
+        id:'demo'+id,
+        category: cat.id,
+        modelIndex: i,
+        icon: cat.icon,     // эмодзи-заглушка вместо фото
+        image_url: null,
+        price: 300 + (id*17)%700,
+        inStock: (id % 4) !== 0,
+        colors: COLORS,
+      });
+      id++;
+    }
+  });
+  return list;
+}
+
+// Загрузка товаров из таблицы "products" в Supabase.
+// Ожидаемые колонки таблицы: id, category, name_ru, name_ua, price, in_stock, image_url, colors (jsonb, необязательно)
+async function loadProducts(){
+  if(!supabaseConfigured){
+    console.warn('Supabase не настроен — показаны демонстрационные товары. Вставьте SUPABASE_URL и SUPABASE_ANON_KEY в коде.');
+    PRODUCTS = buildDemoProducts();
+    return;
+  }
+  try{
+    const { data, error } = await supabaseClient
+      .from('products')
+      .select('*')
+      .order('created_at', { ascending:true });
+
+    if(error) throw error;
+
+    PRODUCTS = (data||[]).map(row=>({
+      id: row.id,
+      category: row.category,
+      name_ru: row.name_ru,
+      name_ua: row.name_ua,
+      icon: (CATEGORIES.find(c=>c.id===row.category)||{}).icon || '🛍️', // запасной значок, если фото ещё не загружено
+      image_url: row.image_url || null,
+      price: row.price,
+      inStock: row.in_stock,
+      colors: (row.colors && row.colors.length ? row.colors : COLORS),
+    }));
+
+    // если в таблице пока нет ни одной строки — покажем демо-товары, чтобы сайт не выглядел пустым
+    if(PRODUCTS.length===0){
+      console.warn('Таблица products пуста — показаны демонстрационные товары.');
+      PRODUCTS = buildDemoProducts();
+    }
+  }catch(err){
+    console.error('Не удалось загрузить товары из Supabase:', err);
+    PRODUCTS = buildDemoProducts();
+  }
+}
+
+// картинка товара: если есть image_url — показываем фото, иначе эмодзи-заглушку
+function productThumbHTML(p){
+  return p.image_url ? `<img src="${p.image_url}" alt="">` : p.icon;
+}
+
+/* =========================================================================
+   СОСТОЯНИЕ ПРИЛОЖЕНИЯ (хранится в памяти на время сессии)
+   ========================================================================= */
+let cart = [];               // [{productId, colorIndex, qty}]
+let favLists = {'Избранное': []}; // {названиеСписка: [productId,...]}
+let activeFavList = 'Избранное';
+let currentCategory = 'all';
+let currentSearch = '';
+let currentProductId = null;
+let currentColorIndex = 0;
+let currentQty = 1;
+let currentFavModalProduct = null;
+let usedOrderNumbers = new Set(); // чтобы номера заказов никогда не повторялись
+
+/* =========================================================================
+   ПЕРЕКЛЮЧЕНИЕ ЯЗЫКА
+   ========================================================================= */
+function setLang(lang){
+  LANG = lang;
+  document.getElementById('langRuBtn').classList.toggle('active', lang==='ru');
+  document.getElementById('langUaBtn').classList.toggle('active', lang==='ua');
+
+  // статичные подписи в шапке
+  document.getElementById('navCatalogTxt').textContent = t('catalog');
+  document.getElementById('navAboutTxt').textContent = t('aboutUs');
+  document.getElementById('navContactsTxt').textContent = t('contacts');
+  document.getElementById('ddCatTitle').textContent = t('categoriesTitle');
+  document.getElementById('ddAllLink').textContent = t('allProductsLink');
+  document.getElementById('ddPhonesTitle').textContent = t('phonesTitle');
+  document.getElementById('searchInput').placeholder = t('searchPlaceholder');
+  document.getElementById('footerBottom').textContent = t('footerRights');
+
+  renderCatalogMenu();
+  renderFooter();
+  renderCatalog();
+
+  // перерисовать текущую открытую страницу, если она активна
+  if(!document.getElementById('viewProduct').classList.contains('hidden')) renderProductPage();
+  if(!document.getElementById('viewCart').classList.contains('hidden')) renderCart();
+  if(!document.getElementById('viewFavorites').classList.contains('hidden')) renderFavoritesPage();
+  if(!document.getElementById('viewAbout').classList.contains('hidden')) showAbout();
+  if(!document.getElementById('viewCheckout').classList.contains('hidden')) showCheckout();
+}
+
+/* =========================================================================
+   ОБЩИЕ ФУНКЦИИ НАВИГАЦИИ
+   ========================================================================= */
+function showView(id){
+  ['viewCatalog','viewProduct','viewCart','viewCheckout','viewFavorites','viewAbout'].forEach(v=>{
+    document.getElementById(v).classList.toggle('hidden', v!==id);
+  });
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function goHome(){
+  currentCategory='all'; currentSearch=''; document.getElementById('searchInput').value='';
+  renderCatalog();
+  showView('viewCatalog');
+}
+
+function closeDropdowns(){
+  document.querySelectorAll('.dropdown').forEach(d=>d.classList.add('hidden'));
+}
+function toggleDropdown(id){
+  const el = document.getElementById(id);
+  const willOpen = el.classList.contains('hidden');
+  closeDropdowns();
+  if(willOpen) el.classList.remove('hidden');
+}
+document.addEventListener('click', function(e){
+  if(!e.target.closest('.nav-item')) closeDropdowns();
+});
+
+/* =========================================================================
+   МОДАЛЬНЫЕ ОКНА (общие функции открытия/закрытия)
+   ========================================================================= */
+function openModalHTML(html){
+  document.getElementById('modalBox').innerHTML = html;
+  document.getElementById('modalOverlay').classList.remove('hidden');
+}
+function closeModal(){
+  document.getElementById('modalOverlay').classList.add('hidden');
+}
+
+/* =========================================================================
+   РЕНДЕР: шапка — сетка категорий в выпадающем каталоге
+   ========================================================================= */
+function renderCatalogMenu(){
+  const grid = document.getElementById('catalogGrid');
+  grid.innerHTML = CATEGORIES.map(c=>
+    `<a href="#" onclick="event.preventDefault();showCatalog('${c.id}');closeDropdowns();">${c.icon} ${catName(c.id)}</a>`
+  ).join('');
+}
+
+/* =========================================================================
+   РЕНДЕР: полоса круглых иконок категорий под шапкой
+   ========================================================================= */
+function renderCatStrip(){
+  const strip = document.getElementById('catStrip');
+  const all = [{id:'all',icon:'✨'}, ...CATEGORIES];
+  strip.innerHTML = all.map(c=>`
+    <div class="cat-circle ${currentCategory===c.id?'active':''}" onclick="showCatalog('${c.id}')">
+      <div class="circle">${c.icon}</div>
+      <div>${c.id==='all' ? t('allProducts') : catName(c.id)}</div>
+    </div>
+  `).join('');
+}
+
+/* =========================================================================
+   РЕНДЕР: сетка товаров (каталог)
+   ========================================================================= */
+function showCatalog(catId){
+  currentCategory = catId;
+  renderCatalog();
+  showView('viewCatalog');
+}
+function onSearch(val){
+  currentSearch = val.trim().toLowerCase();
+  renderCatalog();
+  showView('viewCatalog');
+}
+
+function renderCatalog(){
+  renderCatStrip();
+  document.getElementById('catalogTitle').textContent = currentSearch
+    ? `${t('searchResults')}: "${currentSearch}"`
+    : (currentCategory==='all' ? t('allProducts') : catName(currentCategory));
+  document.getElementById('catalogSub').textContent = currentSearch ? '' : t('fastPath');
+
+  let list = PRODUCTS.filter(p=>{
+    const matchCat = currentCategory==='all' || p.category===currentCategory;
+    const matchSearch = !currentSearch || productName(p).toLowerCase().includes(currentSearch);
+    return matchCat && matchSearch;
+  });
+
+  const grid = document.getElementById('productGrid');
+  if(list.length===0){
+    grid.innerHTML = '';
+    document.getElementById('catalogSub').textContent = t('notFound');
+    return;
+  }
+  grid.innerHTML = list.map(p=>`
+    <div class="product-card">
+      <div class="product-thumb" onclick="openProduct('${p.id}')">${productThumbHTML(p)}</div>
+      <button class="fav-toggle ${isFavorited(p.id)?'active':''}" onclick="event.stopPropagation();openFavModal('${p.id}')">
+        ${isFavorited(p.id) ? '♥' : '♡'}
+      </button>
+      <div class="product-info" onclick="openProduct('${p.id}')">
+        <div class="product-name">${productName(p)}</div>
+        <div class="product-price">${p.price} ₴</div>
+        <div class="stock ${p.inStock?'in':'out'}">${p.inStock?t('inStock'):t('outStock')}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* =========================================================================
+   ИЗБРАННОЕ: логика + модальное окно выбора списка
+   ========================================================================= */
+function isFavorited(productId){
+  return Object.values(favLists).some(list=>list.includes(productId));
+}
+
+// открыть модальное окно "в какой список добавить товар"
+function openFavModal(productId){
+  currentFavModalProduct = productId;
+  renderFavModal();
+}
+
+function renderFavModal(){
+  const pid = currentFavModalProduct;
+  const listNames = Object.keys(favLists);
+  openModalHTML(`
+    <h3>${t('addToList')}</h3>
+    <div class="modal-list">
+      ${listNames.map(n=>`
+        <label class="modal-list-item">
+          <input type="checkbox" ${favLists[n].includes(pid)?'checked':''} onchange="toggleProductInList('${n.replace(/'/g,"\\'")}')">
+          <span>${n}</span>
+        </label>
+      `).join('')}
+    </div>
+    <div class="new-list-row">
+      <input id="modalNewList" type="text" placeholder="${t('newListPlaceholder')}">
+      <button class="btn btn-outline" onclick="createListFromModal()">${t('create')}</button>
+    </div>
+    <button class="btn btn-primary" style="width:100%;margin-top:14px;" onclick="closeModal();refreshAfterFavChange();">${t('done')}</button>
+  `);
+}
+
+function toggleProductInList(listName){
+  const pid = currentFavModalProduct;
+  const list = favLists[listName];
+  const idx = list.indexOf(pid);
+  if(idx>-1) list.splice(idx,1); else list.push(pid);
+  updateFavBadge();
+  renderFavModal(); // обновить чекбоксы в открытом модальном окне
+}
+
+function createListFromModal(){
+  const input = document.getElementById('modalNewList');
+  const name = input.value.trim();
+  if(!name) return;
+  if(!favLists[name]) favLists[name] = [];
+  if(!favLists[name].includes(currentFavModalProduct)) favLists[name].push(currentFavModalProduct);
+  updateFavBadge();
+  renderFavModal();
+}
+
+// после закрытия модального окна — обновить карточки/страницу товара/избранное
+function refreshAfterFavChange(){
+  renderCatalog();
+  if(!document.getElementById('viewProduct').classList.contains('hidden')) renderProductPage();
+  if(!document.getElementById('viewFavorites').classList.contains('hidden')) renderFavoritesPage();
+}
+
+function updateFavBadge(){
+  const total = Object.values(favLists).reduce((s,l)=>s+l.length,0);
+  const badge = document.getElementById('favBadge');
+  badge.textContent = total;
+  badge.classList.toggle('hidden', total===0);
+}
+
+function showFavorites(){
+  renderFavoritesPage();
+  showView('viewFavorites');
+}
+
+function renderFavoritesPage(){
+  const el = document.getElementById('viewFavorites');
+  const listNames = Object.keys(favLists);
+  if(!listNames.includes(activeFavList)) activeFavList = listNames[0];
+  const items = (favLists[activeFavList]||[]).map(pid=>PRODUCTS.find(p=>p.id===pid)).filter(Boolean);
+
+  el.innerHTML = `
+    <div class="section-title">${t('favoritesTitle')}</div>
+    <div class="section-sub">${t('favSub')}</div>
+    <div class="fav-lists">
+      ${listNames.map(n=>`<button class="fav-list-chip ${n===activeFavList?'active':''}" onclick="selectFavList('${n.replace(/'/g,"\\'")}')">${n} (${favLists[n].length})</button>`).join('')}
+    </div>
+    <div class="new-list-row">
+      <input id="newListInput" type="text" placeholder="${t('newListPlaceholder')}">
+      <button class="btn btn-outline" onclick="createFavList()">${t('create')}</button>
+    </div>
+    <div class="product-grid">
+      ${items.length ? items.map(p=>`
+        <div class="product-card">
+          <div class="product-thumb" onclick="openProduct('${p.id}')">${productThumbHTML(p)}</div>
+          <button class="fav-toggle active" onclick="event.stopPropagation();removeFromCurrentList('${p.id}')">♥</button>
+          <div class="product-info" onclick="openProduct('${p.id}')">
+            <div class="product-name">${productName(p)}</div>
+            <div class="product-price">${p.price} ₴</div>
+            <div class="stock ${p.inStock?'in':'out'}">${p.inStock?t('inStock'):t('outStock')}</div>
+          </div>
+        </div>
+      `).join('') : `<div class="empty-state">${t('emptyList')}</div>`}
+    </div>
+  `;
+}
+
+function selectFavList(name){ activeFavList = name; renderFavoritesPage(); }
+
+function createFavList(){
+  const input = document.getElementById('newListInput');
+  const name = input.value.trim();
+  if(!name) return;
+  if(!favLists[name]) favLists[name] = [];
+  activeFavList = name;
+  renderFavoritesPage();
+}
+
+function removeFromCurrentList(productId){
+  const list = favLists[activeFavList];
+  const idx = list.indexOf(productId);
+  if(idx>-1) list.splice(idx,1);
+  updateFavBadge();
+  renderFavoritesPage();
+}
+
+/* =========================================================================
+   СТРАНИЦА ТОВАРА
+   ========================================================================= */
+function openProduct(productId){
+  currentProductId = productId;
+  currentColorIndex = 0;
+  currentQty = 1;
+  renderProductPage();
+  showView('viewProduct');
+}
+
+function renderProductPage(){
+  const p = PRODUCTS.find(x=>x.id===currentProductId);
+  if(!p) return;
+  const el = document.getElementById('viewProduct');
+  const favActive = isFavorited(p.id);
+
+  el.innerHTML = `
+    <a href="#" class="back-link" onclick="event.preventDefault();showCatalog(currentCategory)">${t('back')}</a>
+    <div class="product-detail">
+      <div class="product-detail-img">${productThumbHTML(p)}</div>
+      <div class="product-detail-info">
+        <h1>${productName(p)}</h1>
+        <div class="price">${p.price} ₴</div>
+        <div class="stock ${p.inStock?'in':'out'}" style="margin-bottom:8px;">${p.inStock?t('inStock'):t('outStock')}</div>
+
+        <div class="field-label">${t('color')}</div>
+        <div class="color-options" id="colorOptions">
+          ${p.colors.map((c,i)=>`
+            <div class="color-dot ${i===currentColorIndex?'selected':''}" style="background:${c.hex}" title="${colorName(c)}" onclick="selectColor(${i})"></div>
+          `).join('')}
+        </div>
+
+        <div class="field-label">${t('quantity')}</div>
+        <div class="qty-row">
+          <button class="qty-btn" onclick="changeQty(-1)">−</button>
+          <div class="qty-val" id="qtyVal">${currentQty}</div>
+          <button class="qty-btn" onclick="changeQty(1)">+</button>
+        </div>
+
+        <div class="buy-row">
+          <button class="btn btn-primary" ${p.inStock?'':'disabled'} onclick="addToCart('${p.id}')">
+            ${p.inStock ? t('buy') : t('outOfStockBtn')}
+          </button>
+          <button class="heart-big ${favActive?'active':''}" onclick="openFavModal('${p.id}')">${favActive?'♥':'♡'}</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function selectColor(i){ currentColorIndex = i; renderProductPage(); }
+function changeQty(delta){
+  currentQty = Math.max(1, currentQty + delta);
+  document.getElementById('qtyVal').textContent = currentQty;
+}
+
+function addToCart(productId){
+  const existing = cart.find(c=>c.productId===productId && c.colorIndex===currentColorIndex);
+  if(existing){ existing.qty += currentQty; } else { cart.push({productId, colorIndex: currentColorIndex, qty: currentQty}); }
+  updateCartBadge();
+  showCart();
+}
+
+/* =========================================================================
+   КОРЗИНА
+   ========================================================================= */
+function updateCartBadge(){
+  const total = cart.reduce((s,c)=>s+c.qty,0);
+  const badge = document.getElementById('cartBadge');
+  badge.textContent = total;
+  badge.classList.toggle('hidden', total===0);
+}
+
+function showCart(){ renderCart(); showView('viewCart'); }
+
+function renderCart(){
+  const el = document.getElementById('viewCart');
+  if(cart.length===0){
+    el.innerHTML = `
+      <div class="section-title">${t('cartTitle')}</div>
+      <div class="empty-state">${t('emptyCart')}<br><br>
+        <button class="btn btn-primary" onclick="goHome()">${t('goShopping')}</button>
+      </div>`;
+    return;
+  }
+  let total = 0;
+  const rows = cart.map((c,idx)=>{
+    const p = PRODUCTS.find(x=>x.id===c.productId);
+    const sum = p.price*c.qty;
+    total += sum;
+    return `
+      <div class="cart-item">
+        <div class="thumb">${productThumbHTML(p)}</div>
+        <div class="cart-item-info">
+          <div class="name">${productName(p)}</div>
+          <div class="meta">${t('color')}: ${colorName(p.colors[c.colorIndex])} · ${t('quantity')}: ${c.qty} · ${sum} ₴</div>
+        </div>
+        <button class="remove" onclick="removeFromCart(${idx})">${t('remove')}</button>
+      </div>
+    `;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="section-title">${t('cartTitle')}</div>
+    ${rows}
+    <div class="cart-total"><span>${t('total')}</span><span>${total} ₴</span></div>
+    <button class="btn btn-primary" style="width:100%;" onclick="showCheckout()">${t('checkoutBtn')}</button>
+  `;
+}
+
+function removeFromCart(idx){
+  cart.splice(idx,1);
+  updateCartBadge();
+  renderCart();
+}
+
+/* =========================================================================
+   ОФОРМЛЕНИЕ ЗАКАЗА
+   ========================================================================= */
+function showCheckout(){
+  if(cart.length===0){ showCart(); return; }
+  const el = document.getElementById('viewCheckout');
+  el.innerHTML = `
+    <div class="section-title">${t('checkoutTitle')}</div>
+    <div class="section-sub">${t('checkoutSub')}</div>
+    <form class="checkout-form" onsubmit="submitOrder(event)">
+      <input required type="text" placeholder="${t('name')}" id="ordName">
+      <input required type="text" placeholder="${t('surname')}" id="ordSurname">
+      <input required type="tel" placeholder="${t('phone')}" id="ordPhone">
+      <input required type="text" placeholder="${t('region')}" id="ordRegion">
+      <input required type="text" placeholder="${t('city')}" id="ordCity">
+      <input required type="text" placeholder="${t('branch')}" id="ordBranch">
+
+      <div class="field-label" style="margin-top:6px;">${t('paymentMethod')}</div>
+      <label class="pay-option"><input type="radio" name="pay" value="cod" checked> ${t('cod')}</label>
+      <label class="pay-option"><input type="radio" name="pay" value="transfer"> ${t('transfer')}</label>
+
+      <button type="submit" class="btn btn-primary" style="margin-top:10px;">${t('confirmOrder')}</button>
+    </form>
+  `;
+  showView('viewCheckout');
+}
+
+// генерация уникального номера заказа из 5-6 цифр (никогда не повторяется в этой сессии)
+function generateOrderNumber(){
+  let num;
+  do{
+    const sixDigits = Math.random() < 0.5; // случайно выбираем длину 5 или 6 цифр
+    num = sixDigits
+      ? String(Math.floor(100000 + Math.random()*900000))
+      : String(Math.floor(10000 + Math.random()*90000));
+  } while(usedOrderNumbers.has(num));
+  usedOrderNumbers.add(num);
+  return num;
+}
+
+function submitOrder(e){
+  e.preventDefault();
+  const orderNumber = generateOrderNumber();
+  cart = [];
+  updateCartBadge();
+  // показываем модальное окно с благодарностью и номером заказа
+  openModalHTML(`
+    <h3>${t('thankYou')}</h3>
+    <p style="font-size:15px;">${t('orderNumberLabel')}: <strong style="font-size:18px;">№ ${orderNumber}</strong></p>
+    <p style="color:var(--text-muted);font-size:13px;">${t('weWillContact')}</p>
+    <button class="btn btn-primary" style="width:100%;margin-top:10px;" onclick="closeModal();goHome();">${t('ok')}</button>
+  `);
+}
+
+/* =========================================================================
+   СТРАНИЦА "ПРО НАС"
+   ========================================================================= */
+function showAbout(){
+  const el = document.getElementById('viewAbout');
+  el.innerHTML = `
+    <h1>${t('aboutTitle')}</h1>
+    <p>${t('aboutP1')}</p>
+    <h2>${t('returnTitle')}</h2>
+    <p>${t('aboutP2')}</p>
+    <p>${t('aboutP3')}</p>
+    <h2>${t('deliveryTitle')}</h2>
+    <p>${t('aboutP4')}</p>
+  `;
+  closeDropdowns();
+  showView('viewAbout');
+}
+
+/* =========================================================================
+   ПОДВАЛ САЙТА
+   ========================================================================= */
+function renderFooter(){
+  document.getElementById('footerInner').innerHTML = `
+    <div class="footer-col">
+      <h4>${t('footerShop')}</h4>
+      <button class="link" onclick="showCatalog('all')">${t('catalog')}</button>
+      <button class="link" onclick="showAbout()">${t('aboutUs')}</button>
+      <button class="link" onclick="toggleDropdown('contactsDD')">${t('contacts')}</button>
+    </div>
+    <div class="footer-col">
+      <h4>${t('footerReviews')}</h4>
+      <a href="https://www.instagram.com/nui.shooo" target="_blank" rel="noopener">${t('footerReviewsInsta')}</a>
+      <a href="#" onclick="event.preventDefault()">${t('footerTelegramChannel')}</a>
+    </div>
+    <div class="footer-col">
+      <h4>${t('footerSocials')}</h4>
+      <a href="https://www.instagram.com/nui.shooo?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" target="_blank" rel="noopener">Instagram</a>
+      <a href="#" onclick="event.preventDefault()">${t('telegramLine')}</a>
+    </div>
+    <div class="footer-col">
+      <h4>nui.shooo</h4>
+      <p style="font-size:13px;color:#9a9a9e;max-width:220px;">${t('footerBrandTagline')}</p>
+    </div>
+  `;
+}
+
+/* =========================================================================
+   ИНИЦИАЛИЗАЦИЯ
+   ========================================================================= */
+async function init(){
+  // показываем состояние загрузки, пока идёт запрос к Supabase
+  document.getElementById('productGrid').innerHTML = `<div class="loading-state">Загрузка товаров...</div>`;
+  await loadProducts();
+  setLang('ru');
+  renderCatStrip();
+  renderCatalog();
+  updateCartBadge();
+  updateFavBadge();
+}
+init();
+</script>
+</body>
+</html>
