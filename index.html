@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
 <title>nui.shooo — магазин аксессуаров</title>
+<meta name="description" content="nui.shooo — магазин аксессуаров: шапки, кепки, сумки, перчатки, ремни, кошельки, рюкзаки, брелки, носки и шоперы. Быстрый и удобный заказ с доставкой Новой почтой по всей Украине.">
+<meta property="og:title" content="nui.shooo — магазин аксессуаров">
+<meta property="og:description" content="Шапки, кепки, сумки, перчатки, ремни, кошельки, рюкзаки, брелки, носки и шоперы с доставкой Новой почтой.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="assets/logo.png">
 <style>
 /* ==================== ПЕРЕМЕННЫЕ И БАЗОВЫЕ СТИЛИ ==================== */
 :root{
@@ -599,6 +604,28 @@ function productThumbHTML(p){
    ========================================================================= */
 let cart = [];               // [{productId, colorIndex, qty}]
 let favLists = {'Избранное': []}; // {названиеСписка: [productId,...]}
+
+/* =========================================================================
+   СОХРАНЕНИЕ КОРЗИНЫ И ИЗБРАННОГО В БРАУЗЕРЕ (localStorage)
+   Это позволяет корзине и избранному не пропадать при обновлении страницы
+   или возвращении на сайт позже. Данные хранятся только на этом устройстве.
+   ========================================================================= */
+function saveCartToStorage(){
+  try{ localStorage.setItem('nui_cart', JSON.stringify(cart)); }catch(e){ console.warn('Не удалось сохранить корзину:', e); }
+}
+function saveFavListsToStorage(){
+  try{ localStorage.setItem('nui_favLists', JSON.stringify(favLists)); }catch(e){ console.warn('Не удалось сохранить избранное:', e); }
+}
+function loadStateFromStorage(){
+  try{
+    const savedCart = localStorage.getItem('nui_cart');
+    if(savedCart) cart = JSON.parse(savedCart);
+  }catch(e){ console.warn('Не удалось загрузить сохранённую корзину:', e); }
+  try{
+    const savedFav = localStorage.getItem('nui_favLists');
+    if(savedFav) favLists = JSON.parse(savedFav);
+  }catch(e){ console.warn('Не удалось загрузить сохранённое избранное:', e); }
+}
 let activeFavList = 'Избранное';
 let currentCategory = 'all';
 let currentSearch = '';
@@ -816,6 +843,7 @@ function updateFavBadge(){
   const badge = document.getElementById('favBadge');
   badge.textContent = total;
   badge.classList.toggle('hidden', total===0);
+  saveFavListsToStorage(); // сохраняем изменения в браузере
 }
 
 function showFavorites(){
@@ -863,6 +891,7 @@ function createFavList(){
   if(!name) return;
   if(!favLists[name]) favLists[name] = [];
   activeFavList = name;
+  saveFavListsToStorage();
   renderFavoritesPage();
 }
 
@@ -963,6 +992,7 @@ function updateCartBadge(){
   const badge = document.getElementById('cartBadge');
   badge.textContent = total;
   badge.classList.toggle('hidden', total===0);
+  saveCartToStorage(); // сохраняем изменения в браузере
 }
 
 function showCart(){ renderCart(); showView('viewCart'); }
@@ -1048,11 +1078,73 @@ function generateOrderNumber(){
   return num;
 }
 
-function submitOrder(e){
+// сохраняет заказ в таблицу "orders" в Supabase, чтобы владелец магазина мог его увидеть
+async function saveOrderToSupabase(orderNumber, orderData, orderItems, total){
+  if(!supabaseConfigured){
+    console.warn('Supabase не настроен — заказ не сохранён в базе (только показан покупателю).');
+    return;
+  }
+  try{
+    const { error } = await supabaseClient.from('orders').insert([{
+      order_number: orderNumber,
+      customer_name: orderData.name,
+      customer_surname: orderData.surname,
+      phone: orderData.phone,
+      region: orderData.region,
+      city: orderData.city,
+      branch: orderData.branch,
+      payment_method: orderData.payment,
+      items: orderItems,
+      total: total,
+    }]);
+    if(error) throw error;
+  }catch(err){
+    console.error('Не удалось сохранить заказ в Supabase:', err);
+  }
+}
+
+async function submitOrder(e){
   e.preventDefault();
+
+  // собираем данные покупателя из формы
+  const orderData = {
+    name: document.getElementById('ordName').value.trim(),
+    surname: document.getElementById('ordSurname').value.trim(),
+    phone: document.getElementById('ordPhone').value.trim(),
+    region: document.getElementById('ordRegion').value.trim(),
+    city: document.getElementById('ordCity').value.trim(),
+    branch: document.getElementById('ordBranch').value.trim(),
+    payment: document.querySelector('input[name="pay"]:checked').value,
+  };
+
+  // собираем список товаров в заказе (для сохранения в базу)
+  let total = 0;
+  const orderItems = cart.map(c=>{
+    const p = PRODUCTS.find(x=>x.id===c.productId);
+    const sum = p.price * c.qty;
+    total += sum;
+    return {
+      productId: p.id,
+      name: productName(p),
+      color: colorName(p.colors[c.colorIndex]),
+      qty: c.qty,
+      price: p.price,
+      sum: sum,
+    };
+  });
+
   const orderNumber = generateOrderNumber();
+
+  // показываем кнопку в состоянии "отправка", чтобы покупатель не жал повторно
+  const submitBtn = e.target.querySelector('button[type="submit"]');
+  if(submitBtn){ submitBtn.disabled = true; submitBtn.textContent = '...'; }
+
+  await saveOrderToSupabase(orderNumber, orderData, orderItems, total);
+
   cart = [];
   updateCartBadge();
+  saveCartToStorage();
+
   // показываем модальное окно с благодарностью и номером заказа
   openModalHTML(`
     <h3>${t('thankYou')}</h3>
@@ -1112,6 +1204,8 @@ function renderFooter(){
    ИНИЦИАЛИЗАЦИЯ
    ========================================================================= */
 async function init(){
+  // восстанавливаем корзину и избранное, сохранённые в этом браузере ранее
+  loadStateFromStorage();
   // показываем состояние загрузки, пока идёт запрос к Supabase
   document.getElementById('productGrid').innerHTML = `<div class="loading-state">Загрузка товаров...</div>`;
   await loadProducts();
