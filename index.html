@@ -80,11 +80,6 @@ header.site-header{
   display:flex;align-items:center;justify-content:center;padding:0 3px;
 }
 
-/* переключатель языка RU / UA */
-.lang-switch{display:flex;gap:2px;background:#2f2f32;border-radius:8px;padding:2px;margin-right:4px;}
-.lang-btn{padding:6px 10px;font-size:12px;font-weight:700;border-radius:6px;color:#aaa;}
-.lang-btn.active{background:var(--accent);color:#1c1c1e;}
-
 /* выпадающие панели (dropdown) */
 .dropdown{
   position:absolute;top:calc(100% + 8px);right:0;background:#fff;color:var(--text-dark);
@@ -182,13 +177,40 @@ main{background:var(--white);min-height:60vh;}
 .thumb-strip-item.selected{border-color:var(--accent);opacity:1;}
 .product-detail-info h1{font-size:24px;margin:0 0 8px;}
 .product-detail-info .price{font-size:22px;font-weight:700;margin-bottom:14px;}
+.product-description{font-size:14px;line-height:1.6;color:#444;margin:10px 0 4px;}
 .field-label{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;color:var(--text-muted);margin:18px 0 8px;}
-.color-options{display:flex;gap:10px;flex-wrap:wrap;}
+.color-options{display:flex;gap:12px;flex-wrap:wrap;align-items:center;}
 .color-dot{
-  width:34px;height:34px;border-radius:50%;border:2px solid transparent;cursor:pointer;
-  box-shadow:inset 0 0 0 1px rgba(0,0,0,0.1);
+  width:38px;height:38px;border-radius:50%;border:2px solid transparent;cursor:pointer;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,0.12);position:relative;
+  display:flex;align-items:center;justify-content:center;transition:transform 0.12s, border-color 0.12s;
 }
-.color-dot.selected{border-color:var(--accent);}
+.color-dot:hover{transform:scale(1.08);}
+.color-dot.selected{border-color:var(--accent);box-shadow:inset 0 0 0 1px rgba(0,0,0,0.12), 0 0 0 3px rgba(224,169,64,0.18);}
+.color-dot.selected::after{
+  content:'✓';font-size:15px;font-weight:700;
+  color:#fff;text-shadow:0 0 2px rgba(0,0,0,0.6);
+}
+.color-dot[data-light="1"].selected::after{color:#1c1c1e;text-shadow:none;}
+.color-dot.unavailable{
+  opacity:0.3;cursor:not-allowed;pointer-events:none;position:relative;
+}
+.color-dot.unavailable::before{
+  content:'';position:absolute;inset:0;border-radius:50%;
+  background:repeating-linear-gradient(45deg, rgba(120,120,120,0.7) 0 2px, transparent 2px 6px);
+}
+.color-name-label{font-size:14px;font-weight:600;color:var(--text-dark);margin-left:2px;}
+.size-options{display:flex;gap:8px;flex-wrap:wrap;}
+.size-chip{
+  min-width:44px;padding:9px 14px;border:1.5px solid #ddd;border-radius:10px;
+  font-size:14px;font-weight:600;color:var(--text-dark);transition:border-color 0.12s, background 0.12s;
+}
+.size-chip:hover{border-color:var(--accent);}
+.size-chip.selected{border-color:var(--graphite);background:var(--graphite);color:#fff;}
+.size-chip.unavailable, .size-chip:disabled{
+  opacity:0.4;cursor:not-allowed;text-decoration:line-through;
+  border-color:#eee;color:#aaa;background:#f5f5f5;
+}
 .qty-row{display:flex;align-items:center;gap:12px;}
 .qty-btn{width:34px;height:34px;border:1px solid #ddd;border-radius:8px;font-size:16px;}
 .qty-val{min-width:24px;text-align:center;font-weight:600;}
@@ -223,6 +245,16 @@ main{background:var(--white);min-height:60vh;}
 }
 .pay-option{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid #ddd;border-radius:10px;font-size:14px;}
 .pay-option input{width:auto;}
+
+/* поиск города / отделения Новой почты */
+.np-field{position:relative;}
+.np-results{
+  position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1px solid #ddd;
+  border-radius:10px;box-shadow:var(--shadow);max-height:220px;overflow-y:auto;z-index:50;
+}
+.np-result-item{padding:10px 14px;font-size:14px;cursor:pointer;}
+.np-result-item:hover{background:var(--off-white);}
+.np-hint{font-size:12px;color:var(--text-muted);margin-top:-6px;}
 
 /* ==================== ИЗБРАННОЕ ==================== */
 .fav-lists{display:flex;gap:10px;flex-wrap:wrap;padding:10px 0 20px;}
@@ -289,47 +321,36 @@ footer.site-footer{
     </div>
 
     <div class="nav-actions">
-      <!-- переключатель языка -->
-      <div class="lang-switch">
-        <button class="lang-btn" id="langRuBtn" onclick="setLang('ru')">RU</button>
-        <button class="lang-btn" id="langUaBtn" onclick="setLang('ua')">UA</button>
-      </div>
-
-      <!-- каталог с категориями -->
+      <!-- каталог с категориями (на телефоне это единственная видимая кнопка навигации,
+           поэтому сюда же продублированы ссылки "Про нас" и "Контакты") -->
       <div class="nav-item">
-        <button class="nav-btn" onclick="toggleDropdown('catalogDD')">☰ <span class="txt" id="navCatalogTxt">Каталог</span></button>
+        <button class="nav-btn" onclick="toggleDropdown('catalogDD')">☰ <span class="txt">Каталог</span></button>
         <div class="dropdown wide hidden" id="catalogDD">
-          <div class="dropdown-title" id="ddCatTitle">Категории</div>
+          <div class="dropdown-title">Категорії</div>
           <div class="catalog-grid" id="catalogGrid"></div>
-          <a href="#" id="ddAllLink" onclick="event.preventDefault();showCatalog('all');closeDropdowns();">Все товары →</a>
+          <a href="#" onclick="event.preventDefault();showCatalog('all');closeDropdowns();">Усі товари →</a>
+          <div style="border-top:1px solid #eee;margin-top:8px;padding-top:8px;">
+            <a href="#" onclick="event.preventDefault();showAbout();closeDropdowns();">Про нас</a>
+            <a href="#" onclick="event.preventDefault();openContactsModal();closeDropdowns();">Контакти</a>
+          </div>
         </div>
       </div>
 
       <!-- про нас -->
       <div class="nav-item">
-        <button class="nav-btn" onclick="showAbout()"><span class="txt" id="navAboutTxt">Про нас</span></button>
+        <button class="nav-btn" onclick="showAbout()"><span class="txt">Про нас</span></button>
       </div>
 
-      <!-- контакты (без значка телефона) -->
+      <!-- контакти: открываются отдельным модальным окном -->
       <div class="nav-item">
-        <button class="nav-btn" onclick="toggleDropdown('contactsDD')"><span class="txt" id="navContactsTxt">Контакты</span></button>
-        <div class="dropdown hidden" id="contactsDD">
-          <div class="dropdown-title" id="ddPhonesTitle">Телефоны</div>
-          <div class="contact-line">+380 (00) 000-00-01</div>
-          <div class="contact-line">+380 (00) 000-00-02</div>
-          <div class="contact-line">+380 (00) 000-00-03</div>
-          <div class="contact-line">Telegram: @nui_shooo</div>
-          <a class="insta-link" href="https://www.instagram.com/nui.shooo?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" target="_blank" rel="noopener">
-            Instagram: nui.shooo
-          </a>
-        </div>
+        <button class="nav-btn" onclick="openContactsModal()"><span class="txt">Контакти</span></button>
       </div>
 
       <!-- избранное -->
       <div class="nav-item">
         <button class="icon-btn" onclick="showFavorites()">
           <!-- иконка сердца -->
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7.5-4.7-10-9.3C.5 8.4 2.3 5 5.8 5c2 0 3.4 1 4.2 2.3C10.8 6 12.2 5 14.2 5c3.5 0 5.3 3.4 3.8 6.7C19.5 16.3 12 21 12 21z"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
           <span class="badge hidden" id="favBadge">0</span>
         </button>
       </div>
@@ -411,69 +432,74 @@ const supabaseClient = supabaseConfigured
   : null;
 
 /* =========================================================================
-   ЯЗЫК ИНТЕРФЕЙСА (RU / UA) И СЛОВАРЬ ТЕКСТОВ
+   ПОДКЛЮЧЕНИЕ НОВОЙ ПОЧТЫ (автоматический выбор города и отделения)
+   Вставьте сюда свой API-ключ (получить бесплатно на devcenter.novaposhta.ua).
+   Пока ключ не вставлен — на странице оформления заказа будут обычные текстовые поля.
    ========================================================================= */
-let LANG = 'ru';
+const NOVA_POSHTA_API_KEY = '35159f06b9c5316e2a514f2e238a13fa';
+const novaPoshtaConfigured = !NOVA_POSHTA_API_KEY.includes('ВАШ-API-КЛЮЧ');
 
+async function novaPoshtaRequest(modelName, calledMethod, methodProperties){
+  const res = await fetch('https://api.novaposhta.ua/v2.0/json/', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ apiKey: NOVA_POSHTA_API_KEY, modelName, calledMethod, methodProperties }),
+  });
+  return res.json();
+}
+
+// поиск городов по части названия (используется в поле "Місто" на странице заказа)
+async function npSearchCities(query){
+  if(!novaPoshtaConfigured || query.trim().length < 2) return [];
+  try{
+    const data = await novaPoshtaRequest('Address','searchSettlements',{ CityName: query, Limit: 8 });
+    const items = (data.data && data.data[0] && data.data[0].Addresses) || [];
+    return items.map(a=>({ ref: a.DeliveryCity, name: a.Present }));
+  }catch(err){ console.error('Ошибка поиска города (Нова пошта):', err); return []; }
+}
+
+// получить список отделений для выбранного города
+async function npLoadWarehouses(cityRef){
+  if(!novaPoshtaConfigured) return [];
+  try{
+    const data = await novaPoshtaRequest('AddressGeneral','getWarehouses',{ CityRef: cityRef, Limit: 300 });
+    return data.data || [];
+  }catch(err){ console.error('Ошибка загрузки отделений (Нова пошта):', err); return []; }
+}
+
+/* =========================================================================
+   ТЕКСТЫ ИНТЕРФЕЙСА (украинский язык)
+   ========================================================================= */
 const STR = {
-  ru:{
-    catalog:'Каталог', categoriesTitle:'Категории', allProductsLink:'Все товары →', aboutUs:'Про нас', contacts:'Контакты',
-    phonesTitle:'Телефоны', searchPlaceholder:'Поиск товара...',
-    allProducts:'Все товары', fastPath:'Быстрый путь от просмотра до покупки',
-    searchResults:'Результаты поиска', notFound:'Ничего не найдено — попробуйте другой запрос',
-    inStock:'В наличии', outStock:'Нет в наличии',
-    addToList:'Добавить в список', newListPlaceholder:'Название нового списка...', create:'Создать', done:'Готово',
-    favoritesTitle:'Избранное', cartTitle:'Корзина', favSub:'Создавайте свои подборки, например «На зиму» или «Футболки»',
-    emptyList:'В этом списке пока пусто',
-    back:'← Назад в каталог', color:'Цвет', quantity:'Количество', buy:'Купить', outOfStockBtn:'Нет в наличии',
-    emptyCart:'Ваша корзина пуста', goShopping:'Перейти к покупкам',
-    total:'Итого', checkoutBtn:'Оформить заказ', remove:'Удалить',
-    checkoutTitle:'Оформление заказа', checkoutSub:'Заполните данные для доставки Новой почтой',
-    name:'Имя', surname:'Фамилия', phone:'Номер телефона', region:'Область', city:'Город', branch:'Отделение Новой почты (номер)',
-    paymentMethod:'Способ оплаты', cod:'Оплата при получении', transfer:'Перевод по реквизитам', confirmOrder:'Подтвердить заказ',
-    thankYou:'Спасибо за заказ!', orderNumberLabel:'Номер заказа', weWillContact:'Мы свяжемся с вами для подтверждения.', ok:'Хорошо',
-    aboutTitle:'Про nui.shooo',
-    aboutP1:'nui.shooo — магазин аксессуаров: шапки, кепки, сумки, перчатки, ремни, кошельки, рюкзаки, брелки, носки и шоперы. Мы создаём вещи, которые легко выбрать и приятно носить каждый день.',
-    returnTitle:'Возврат и обмен',
-    aboutP2:'Если размер или модель не подошли — вещь можно обменять или вернуть в течение 14 дней с момента получения заказа. Товар должен быть в оригинальном виде, без следов использования, с сохранёнными бирками и упаковкой.',
-    aboutP3:'Для оформления обмена или возврата свяжитесь с нами любым удобным способом — по телефону, в Telegram или Instagram (ссылки в разделе «Контакты»). Мы поможем подобрать нужный размер или вернём стоимость товара удобным для вас способом.',
-    deliveryTitle:'Доставка',
-    aboutP4:'Отправляем заказы Новой почтой по всей Украине. Доступна оплата при получении или перевод по реквизитам.',
-    footerShop:'Магазин', footerReviews:'Отзывы', footerSocials:'Соц. сети', footerReviewsInsta:'Отзывы в Instagram', footerTelegramChannel:'Telegram-канал',
-    footerBrandTagline:'Аксессуары, которые легко выбрать и приятно носить.', footerRights:'© 2026 nui.shooo. Все права защищены.',
-    telegramLine:'Telegram: @nui_shooo',
-  },
-  ua:{
-    catalog:'Каталог', categoriesTitle:'Категорії', allProductsLink:'Усі товари →', aboutUs:'Про нас', contacts:'Контакти',
-    phonesTitle:'Телефони', searchPlaceholder:'Пошук товару...',
-    allProducts:'Усі товари', fastPath:'Швидкий шлях від перегляду до покупки',
-    searchResults:'Результати пошуку', notFound:'Нічого не знайдено — спробуйте інший запит',
-    inStock:'В наявності', outStock:'Немає в наявності',
-    addToList:'Додати до списку', newListPlaceholder:'Назва нового списку...', create:'Створити', done:'Готово',
-    favoritesTitle:'Обране', cartTitle:'Кошик', favSub:'Створюйте власні добірки, наприклад «На зиму» або «Футболки»',
-    emptyList:'У цьому списку поки що порожньо',
-    back:'← Назад до каталогу', color:'Колір', quantity:'Кількість', buy:'Купити', outOfStockBtn:'Немає в наявності',
-    emptyCart:'Ваш кошик порожній', goShopping:'Перейти до покупок',
-    total:'Разом', checkoutBtn:'Оформити замовлення', remove:'Видалити',
-    checkoutTitle:'Оформлення замовлення', checkoutSub:'Заповніть дані для доставки Новою поштою',
-    name:'Ім\u0027я', surname:'Прізвище', phone:'Номер телефону', region:'Область', city:'Місто', branch:'Відділення Нової пошти (номер)',
-    paymentMethod:'Спосіб оплати', cod:'Оплата при отриманні', transfer:'Переказ за реквізитами', confirmOrder:'Підтвердити замовлення',
-    thankYou:'Дякуємо за замовлення!', orderNumberLabel:'Номер замовлення', weWillContact:'Ми зв\u0027яжемося з вами для підтвердження.', ok:'Добре',
-    aboutTitle:'Про nui.shooo',
-    aboutP1:'nui.shooo — магазин аксесуарів: шапки, кепки, сумки, рукавички, ремені, гаманці, рюкзаки, брелоки, шкарпетки та шопери. Ми створюємо речі, які легко обрати і приємно носити щодня.',
-    returnTitle:'Повернення та обмін',
-    aboutP2:'Якщо розмір або модель не підійшли — річ можна обміняти або повернути протягом 14 днів з моменту отримання замовлення. Товар має бути в оригінальному вигляді, без слідів використання, зі збереженими бірками та упаковкою.',
-    aboutP3:'Для оформлення обміну чи повернення зв\u0027яжіться з нами будь-яким зручним способом — телефоном, у Telegram або Instagram (посилання у розділі «Контакти»). Ми допоможемо підібрати потрібний розмір або повернемо вартість товару зручним для вас способом.',
-    deliveryTitle:'Доставка',
-    aboutP4:'Надсилаємо замовлення Новою поштою по всій Україні. Доступна оплата при отриманні або переказ за реквізитами.',
-    footerShop:'Магазин', footerReviews:'Відгуки', footerSocials:'Соц. мережі', footerReviewsInsta:'Відгуки в Instagram', footerTelegramChannel:'Telegram-канал',
-    footerBrandTagline:'Аксесуари, які легко обрати і приємно носити.', footerRights:'© 2026 nui.shooo. Усі права захищені.',
-    telegramLine:'Telegram: @nui_shooo',
-  }
+  catalog:'Каталог', categoriesTitle:'Категорії', allProductsLink:'Усі товари →', aboutUs:'Про нас', contacts:'Контакти',
+  phonesTitle:'Телефони', searchPlaceholder:'Пошук товару...',
+  allProducts:'Усі товари', fastPath:'Швидкий шлях від перегляду до покупки',
+  searchResults:'Результати пошуку', notFound:'Нічого не знайдено — спробуйте інший запит',
+  inStock:'В наявності', outStock:'Немає в наявності',
+  addToList:'Додати до списку', newListPlaceholder:'Назва нового списку...', create:'Створити', done:'Готово',
+  favoritesTitle:'Обране', cartTitle:'Кошик', favSub:'Створюйте власні добірки, наприклад «На зиму» або «Футболки»',
+  emptyList:'У цьому списку поки що порожньо',
+  back:'← Назад до каталогу', color:'Колір', quantity:'Кількість', buy:'Купити', outOfStockBtn:'Немає в наявності',
+  emptyCart:'Ваш кошик порожній', goShopping:'Перейти до покупок',
+  total:'Разом', checkoutBtn:'Оформити замовлення', remove:'Видалити',
+  checkoutTitle:'Оформлення замовлення', checkoutSub:'Заповніть дані для доставки Новою поштою',
+  name:'Ім\u0027я', surname:'Прізвище', phone:'Номер телефону', region:'Область', city:'Місто', branch:'Відділення Нової пошти (номер)',
+  paymentMethod:'Спосіб оплати', cod:'Оплата при отриманні', transfer:'Переказ за реквізитами', confirmOrder:'Підтвердити замовлення',
+  thankYou:'Дякуємо за замовлення!', orderNumberLabel:'Номер замовлення', weWillContact:'Ми зв\u0027яжемося з вами для підтвердження.', ok:'Добре',
+  aboutTitle:'Про nui.shooo',
+  aboutP1:'nui.shooo — магазин аксесуарів: шапки, кепки, сумки, рукавички, ремені, гаманці, рюкзаки, брелоки, шкарпетки та шопери. Ми створюємо речі, які легко обрати і приємно носити щодня.',
+  returnTitle:'Повернення та обмін',
+  aboutP2:'Якщо розмір або модель не підійшли — річ можна обміняти або повернути протягом 14 днів з моменту отримання замовлення. Товар має бути в оригінальному вигляді, без слідів використання, зі збереженими бірками та упаковкою.',
+  aboutP3:'Для оформлення обміну чи повернення зв\u0027яжіться з нами будь-яким зручним способом — телефоном, у Telegram або Instagram (посилання у розділі «Контакти»). Ми допоможемо підібрати потрібний розмір або повернемо вартість товару зручним для вас способом.',
+  deliveryTitle:'Доставка',
+  aboutP4:'Надсилаємо замовлення Новою поштою по всій Україні. Доступна оплата при отриманні або переказ за реквізитами.',
+  footerShop:'Магазин', footerReviews:'Відгуки', footerSocials:'Соц. мережі', footerReviewsInsta:'Відгуки в Instagram', footerTelegramChannel:'Telegram-канал',
+  footerBrandTagline:'Аксесуари, які легко обрати і приємно носити.', footerRights:'© 2026 nui.shooo. Усі права захищені.',
+  telegramLine:'Telegram: @nui_shooo',
 };
 
-// короткая функция доступа к переводу текущего языка
-function t(key){ return STR[LANG][key]; }
+// короткая функция доступа к тексту интерфейса
+function t(key){ return STR[key]; }
 
 /* =========================================================================
    ДАННЫЕ МАГАЗИНА
@@ -497,28 +523,58 @@ const CATEGORIES = [
 
 function catName(catId){
   const c = CATEGORIES.find(x=>x.id===catId);
-  if(!c) return t('allProducts');
-  return LANG==='ua' ? c.name_ua : c.name;
+  return c ? c.name_ua : t('allProducts');
 }
 
-// цвета для выбора на странице товара (ru/ua названия + hex для кружка)
+// цвета для выбора на странице товара по умолчанию (используются, если в Supabase для товара
+// не заполнена колонка colors)
 const COLORS = [
-  {name:'Чёрный', name_ua:'Чорний',  hex:'#1c1c1e'},
-  {name:'Графит', name_ua:'Графіт',  hex:'#5a5a5e'},
-  {name:'Бежевый', name_ua:'Бежевий', hex:'#d8c9ab'},
-  {name:'Белый', name_ua:'Білий',    hex:'#ffffff'},
+  {name_ua:'Чорний',  hex:'#1c1c1e'},
+  {name_ua:'Графіт',  hex:'#5a5a5e'},
+  {name_ua:'Бежевий', hex:'#d8c9ab'},
+  {name_ua:'Білий',   hex:'#ffffff'},
 ];
-function colorName(c){ return LANG==='ua' ? c.name_ua : c.name; }
+function colorName(c){ return c.name_ua; }
+
+// словарь: название цвета (как его впишут в Supabase) → код цвета для кружка.
+// это позволяет владельцу магазина просто писать "Чорний, Білий, Синій" текстом,
+// не разбираясь в HEX-кодах
+const COLOR_HEX_MAP = {
+  'чорний':'#1c1c1e', 'чёрный':'#1c1c1e',
+  'білий':'#ffffff', 'белый':'#ffffff',
+  'сірий':'#9a9a9e', 'серый':'#9a9a9e',
+  'графіт':'#5a5a5e', 'графит':'#5a5a5e',
+  'бежевий':'#d8c9ab', 'бежевый':'#d8c9ab',
+  'коричневий':'#6b4a34', 'коричневый':'#6b4a34',
+  'хакі':'#7c7a5e', 'хаки':'#7c7a5e',
+  'синій':'#2b4c8c', 'синий':'#2b4c8c',
+  'блакитний':'#5fa8d3', 'голубой':'#5fa8d3',
+  'зелений':'#3c6e3c', 'зелёный':'#3c6e3c', 'зеленый':'#3c6e3c',
+  'червоний':'#b23b3b', 'красный':'#b23b3b',
+  'бордовий':'#6e1f2a', 'бордовый':'#6e1f2a',
+  'жовтий':'#e0c23a', 'жёлтый':'#e0c23a', 'желтый':'#e0c23a',
+  'помаранчевий':'#d97b29', 'оранжевый':'#d97b29',
+  'рожевий':'#e6a4c4', 'розовый':'#e6a4c4',
+  'фіолетовий':'#6b4c8c', 'фиолетовый':'#6b4c8c',
+};
+// подбирает цвет кружка по названию; если названия нет в словаре — нейтральный серый запасной вариант
+function hexForColorName(name){
+  return COLOR_HEX_MAP[name.trim().toLowerCase()] || '#b5b5b5';
+}
+// определяет, светлый ли цвет — чтобы галочка выбора была тёмной и не терялась на светлом фоне
+function isLightColor(hex){
+  const h = hex.replace('#','');
+  const r = parseInt(h.substring(0,2),16), g = parseInt(h.substring(2,4),16), b = parseInt(h.substring(4,6),16);
+  return (r*299 + g*587 + b*114) / 1000 > 180;
+}
 
 // Товары. Изначально пусто — заполняются либо из Supabase, либо демо-данными (см. loadProducts).
 let PRODUCTS = [];
 
-// Название товара: если в Supabase задано своё название (name_ru/name_ua) — используем его,
+// Название товара: если в Supabase задано своё название (name_ua) — используем его,
 // иначе строим авто-название из категории и номера модели (для демо-товаров).
 function productName(p){
-  if(LANG==='ua' && p.name_ua) return p.name_ua;
-  if(LANG==='ru' && p.name_ru) return p.name_ru;
-  if(p.name_ru) return p.name_ru; // запасной вариант, если перевода нет
+  if(p.name_ua) return p.name_ua;
   return catName(p.category) + ' — модель ' + (p.modelIndex || 1);
 }
 
@@ -546,7 +602,10 @@ function buildDemoProducts(){
 }
 
 // Загрузка товаров из таблицы "products" в Supabase.
-// Ожидаемые колонки таблицы: id, category, name_ru, name_ua, price, in_stock, image_urls (текст, ссылки через запятую), colors (jsonb, необязательно)
+// Ожидаемые колонки таблицы: id, category, name_ua, description, price, in_stock,
+// image_urls (ссылки через запятую), colors (названия цветов через запятую, необязательно),
+// sizes (размеры через запятую, необязательно), unavailable_colors и unavailable_sizes
+// (те цвета/размеры из списка выше, которых сейчас нет в наличии — через запятую, необязательно)
 async function loadProducts(){
   if(!supabaseConfigured){
     console.warn('Supabase не настроен — показаны демонстрационные товары. Вставьте SUPABASE_URL и SUPABASE_ANON_KEY в коде.');
@@ -570,16 +629,41 @@ async function loadProducts(){
       } else if(row.image_url){
         images = [row.image_url];
       }
+
+      // цвета: просто текст через запятую, например "Чорний, Білий, Синій"
+      let colors = COLORS;
+      if(row.colors){
+        const names = row.colors.split(',').map(s=>s.trim()).filter(Boolean);
+        if(names.length) colors = names.map(n => ({ name_ua: n, hex: hexForColorName(n) }));
+      }
+
+      // размеры: тоже просто текст через запятую, например "S, M, L, XL"
+      let sizes = [];
+      if(row.sizes){
+        sizes = row.sizes.split(',').map(s=>s.trim()).filter(Boolean);
+      }
+
+      // какие из этих цветов/размеров сейчас нет в наличии (будут показаны серыми и неактивными)
+      const unavailableColors = row.unavailable_colors
+        ? row.unavailable_colors.split(',').map(s=>s.trim().toLowerCase()).filter(Boolean)
+        : [];
+      const unavailableSizes = row.unavailable_sizes
+        ? row.unavailable_sizes.split(',').map(s=>s.trim().toLowerCase()).filter(Boolean)
+        : [];
+
       return {
         id: row.id,
         category: row.category,
-        name_ru: row.name_ru,
         name_ua: row.name_ua,
+        description: row.description || '',
         icon: (CATEGORIES.find(c=>c.id===row.category)||{}).icon || '🛍️', // запасной значок, если фото ещё не загружено
         images: images,
         price: row.price,
         inStock: row.in_stock,
-        colors: (row.colors && row.colors.length ? row.colors : COLORS),
+        colors: colors,
+        sizes: sizes,
+        unavailableColors: unavailableColors,
+        unavailableSizes: unavailableSizes,
       };
     });
 
@@ -631,39 +715,36 @@ let currentCategory = 'all';
 let currentSearch = '';
 let currentProductId = null;
 let currentColorIndex = 0;
+let currentSizeIndex = 0;
 let currentQty = 1;
 let currentImageIndex = 0; // индекс текущего показанного фото в галерее товара
 let currentFavModalProduct = null;
 let usedOrderNumbers = new Set(); // чтобы номера заказов никогда не повторялись
 
 /* =========================================================================
-   ПЕРЕКЛЮЧЕНИЕ ЯЗЫКА
+   ПЕРВИЧНАЯ НАСТРОЙКА СТАТИЧНЫХ ПОДПИСЕЙ (без переключения языка — сайт на украинском)
    ========================================================================= */
-function setLang(lang){
-  LANG = lang;
-  document.getElementById('langRuBtn').classList.toggle('active', lang==='ru');
-  document.getElementById('langUaBtn').classList.toggle('active', lang==='ua');
-
-  // статичные подписи в шапке
-  document.getElementById('navCatalogTxt').textContent = t('catalog');
-  document.getElementById('navAboutTxt').textContent = t('aboutUs');
-  document.getElementById('navContactsTxt').textContent = t('contacts');
-  document.getElementById('ddCatTitle').textContent = t('categoriesTitle');
-  document.getElementById('ddAllLink').textContent = t('allProductsLink');
-  document.getElementById('ddPhonesTitle').textContent = t('phonesTitle');
+function applyStaticText(){
   document.getElementById('searchInput').placeholder = t('searchPlaceholder');
   document.getElementById('footerBottom').textContent = t('footerRights');
-
   renderCatalogMenu();
   renderFooter();
   renderCatalog();
+}
 
-  // перерисовать текущую открытую страницу, если она активна
-  if(!document.getElementById('viewProduct').classList.contains('hidden')) renderProductPage();
-  if(!document.getElementById('viewCart').classList.contains('hidden')) renderCart();
-  if(!document.getElementById('viewFavorites').classList.contains('hidden')) renderFavoritesPage();
-  if(!document.getElementById('viewAbout').classList.contains('hidden')) showAbout();
-  if(!document.getElementById('viewCheckout').classList.contains('hidden')) showCheckout();
+// открыть контакты отдельным модальным окном (удобнее на телефоне, чем выпадающее меню)
+function openContactsModal(){
+  openModalHTML(`
+    <h3>${t('contacts')}</h3>
+    <div class="contact-line">+380 (00) 000-00-01</div>
+    <div class="contact-line">+380 (00) 000-00-02</div>
+    <div class="contact-line">+380 (00) 000-00-03</div>
+    <div class="contact-line">Telegram: @nui_shooo</div>
+    <a class="insta-link" href="https://www.instagram.com/nui.shooo?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" target="_blank" rel="noopener">
+      Instagram: nui.shooo
+    </a>
+    <button class="btn btn-primary" style="width:100%;margin-top:14px;" onclick="closeModal()">${t('done')}</button>
+  `);
 }
 
 /* =========================================================================
@@ -712,7 +793,7 @@ function closeModal(){
 function renderCatalogMenu(){
   const grid = document.getElementById('catalogGrid');
   grid.innerHTML = CATEGORIES.map(c=>
-    `<a href="#" onclick="event.preventDefault();showCatalog('${c.id}');closeDropdowns();">${c.icon} ${catName(c.id)}</a>`
+    `<a href="#" onclick="event.preventDefault();showCatalog('${c.id}');closeDropdowns();">${catName(c.id)}</a>`
   ).join('');
 }
 
@@ -906,9 +987,19 @@ function removeFromCurrentList(productId){
 /* =========================================================================
    СТРАНИЦА ТОВАРА
    ========================================================================= */
+// находит индекс первого доступного варианта (не входящего в список недоступных);
+// если все варианты недоступны — просто возвращает первый (0), чтобы страница не сломалась
+function firstAvailableIndex(items, unavailableList, nameFn){
+  if(!unavailableList || unavailableList.length===0) return 0;
+  const idx = items.findIndex(item => !unavailableList.includes(nameFn(item).toLowerCase()));
+  return idx === -1 ? 0 : idx;
+}
+
 function openProduct(productId){
   currentProductId = productId;
-  currentColorIndex = 0;
+  const p = PRODUCTS.find(x=>x.id===productId);
+  currentColorIndex = p ? firstAvailableIndex(p.colors, p.unavailableColors, colorName) : 0;
+  currentSizeIndex = (p && p.sizes && p.sizes.length) ? firstAvailableIndex(p.sizes, p.unavailableSizes, s=>s) : 0;
   currentQty = 1;
   currentImageIndex = 0;
   renderProductPage();
@@ -944,13 +1035,26 @@ function renderProductPage(){
         <h1>${productName(p)}</h1>
         <div class="price">${p.price} ₴</div>
         <div class="stock ${p.inStock?'in':'out'}" style="margin-bottom:8px;">${p.inStock?t('inStock'):t('outStock')}</div>
+        ${p.description ? `<div class="product-description">${p.description}</div>` : ''}
 
         <div class="field-label">${t('color')}</div>
         <div class="color-options" id="colorOptions">
-          ${p.colors.map((c,i)=>`
-            <div class="color-dot ${i===currentColorIndex?'selected':''}" style="background:${c.hex}" title="${colorName(c)}" onclick="selectColor(${i})"></div>
-          `).join('')}
+          ${p.colors.map((c,i)=>{
+            const unavailable = p.unavailableColors && p.unavailableColors.includes(colorName(c).toLowerCase());
+            return `<div class="color-dot ${i===currentColorIndex?'selected':''} ${unavailable?'unavailable':''}" data-light="${isLightColor(c.hex)?1:0}" style="background:${c.hex}" title="${colorName(c)}${unavailable?' — немає в наявності':''}" ${unavailable?'':`onclick="selectColor(${i})"`}></div>`;
+          }).join('')}
+          <span class="color-name-label">${colorName(p.colors[currentColorIndex])}</span>
         </div>
+
+        ${(p.sizes && p.sizes.length) ? `
+          <div class="field-label">Розмір</div>
+          <div class="size-options">
+            ${p.sizes.map((s,i)=>{
+              const unavailable = p.unavailableSizes && p.unavailableSizes.includes(s.toLowerCase());
+              return `<button type="button" class="size-chip ${i===currentSizeIndex?'selected':''} ${unavailable?'unavailable':''}" ${unavailable?'disabled title="Немає в наявності"':`onclick="selectSize(${i})"`}>${s}</button>`;
+            }).join('')}
+          </div>
+        ` : ''}
 
         <div class="field-label">${t('quantity')}</div>
         <div class="qty-row">
@@ -971,6 +1075,7 @@ function renderProductPage(){
 }
 
 function selectColor(i){ currentColorIndex = i; renderProductPage(); }
+function selectSize(i){ currentSizeIndex = i; renderProductPage(); }
 function selectImage(i){ currentImageIndex = i; renderProductPage(); }
 function changeQty(delta){
   currentQty = Math.max(1, currentQty + delta);
@@ -978,8 +1083,8 @@ function changeQty(delta){
 }
 
 function addToCart(productId){
-  const existing = cart.find(c=>c.productId===productId && c.colorIndex===currentColorIndex);
-  if(existing){ existing.qty += currentQty; } else { cart.push({productId, colorIndex: currentColorIndex, qty: currentQty}); }
+  const existing = cart.find(c=>c.productId===productId && c.colorIndex===currentColorIndex && c.sizeIndex===currentSizeIndex);
+  if(existing){ existing.qty += currentQty; } else { cart.push({productId, colorIndex: currentColorIndex, sizeIndex: currentSizeIndex, qty: currentQty}); }
   updateCartBadge();
   showCart();
 }
@@ -1017,7 +1122,7 @@ function renderCart(){
         <div class="thumb">${productThumbHTML(p)}</div>
         <div class="cart-item-info">
           <div class="name">${productName(p)}</div>
-          <div class="meta">${t('color')}: ${colorName(p.colors[c.colorIndex])} · ${t('quantity')}: ${c.qty} · ${sum} ₴</div>
+          <div class="meta">${t('color')}: ${colorName(p.colors[c.colorIndex])}${p.sizes && p.sizes.length ? ' · Розмір: ' + p.sizes[c.sizeIndex] : ''} · ${t('quantity')}: ${c.qty} · ${sum} ₴</div>
         </div>
         <button class="remove" onclick="removeFromCart(${idx})">${t('remove')}</button>
       </div>
@@ -1044,6 +1149,26 @@ function removeFromCart(idx){
 function showCheckout(){
   if(cart.length===0){ showCart(); return; }
   const el = document.getElementById('viewCheckout');
+
+  // поля доставки: если подключена Нова Пошта — поиск города/отделения,
+  // иначе (пока нет API-ключа) — обычные текстовые поля вручную
+  const deliveryFieldsHTML = novaPoshtaConfigured ? `
+    <div class="np-field">
+      <input type="text" placeholder="${t('city')}" id="npCityInput" autocomplete="off" oninput="onNpCityInput(this.value)">
+      <div class="np-results hidden" id="npCityResults"></div>
+      <input type="hidden" id="npCityRef">
+    </div>
+    <div class="np-field">
+      <select id="npWarehouseSelect" disabled>
+        <option value="">Спочатку оберіть місто</option>
+      </select>
+    </div>
+  ` : `
+    <input required type="text" placeholder="${t('region')}" id="ordRegion">
+    <input required type="text" placeholder="${t('city')}" id="ordCity">
+    <input required type="text" placeholder="${t('branch')}" id="ordBranch">
+  `;
+
   el.innerHTML = `
     <div class="section-title">${t('checkoutTitle')}</div>
     <div class="section-sub">${t('checkoutSub')}</div>
@@ -1051,9 +1176,7 @@ function showCheckout(){
       <input required type="text" placeholder="${t('name')}" id="ordName">
       <input required type="text" placeholder="${t('surname')}" id="ordSurname">
       <input required type="tel" placeholder="${t('phone')}" id="ordPhone">
-      <input required type="text" placeholder="${t('region')}" id="ordRegion">
-      <input required type="text" placeholder="${t('city')}" id="ordCity">
-      <input required type="text" placeholder="${t('branch')}" id="ordBranch">
+      ${deliveryFieldsHTML}
 
       <div class="field-label" style="margin-top:6px;">${t('paymentMethod')}</div>
       <label class="pay-option"><input type="radio" name="pay" value="cod" checked> ${t('cod')}</label>
@@ -1064,6 +1187,48 @@ function showCheckout(){
   `;
   showView('viewCheckout');
 }
+
+// debounce-таймер для поиска городов (чтобы не слать запрос на каждую нажатую букву)
+let npCitySearchTimer = null;
+function onNpCityInput(value){
+  clearTimeout(npCitySearchTimer);
+  npCitySearchTimer = setTimeout(async ()=>{
+    const results = await npSearchCities(value);
+    const box = document.getElementById('npCityResults');
+    if(!box) return;
+    if(results.length===0){ box.classList.add('hidden'); box.innerHTML=''; return; }
+    box.innerHTML = results.map(r=>`
+      <div class="np-result-item" onclick="selectNpCity('${r.ref}', '${r.name.replace(/'/g,"\\'")}')">${r.name}</div>
+    `).join('');
+    box.classList.remove('hidden');
+  }, 350);
+}
+
+async function selectNpCity(cityRef, cityName){
+  document.getElementById('npCityInput').value = cityName;
+  document.getElementById('npCityRef').value = cityRef;
+  document.getElementById('npCityResults').classList.add('hidden');
+
+  const select = document.getElementById('npWarehouseSelect');
+  select.disabled = true;
+  select.innerHTML = `<option value="">Завантаження відділень...</option>`;
+
+  const warehouses = await npLoadWarehouses(cityRef);
+  if(warehouses.length===0){
+    select.innerHTML = `<option value="">Відділення не знайдено</option>`;
+    return;
+  }
+  select.innerHTML = warehouses.map(w=>`<option value="${w.Description.replace(/"/g,'&quot;')}">${w.Description}</option>`).join('');
+  select.disabled = false;
+}
+
+// закрыть список городов при клике вне поля
+document.addEventListener('click', function(e){
+  if(!e.target.closest('.np-field')){
+    const box = document.getElementById('npCityResults');
+    if(box) box.classList.add('hidden');
+  }
+});
 
 // генерация уникального номера заказа из 5-6 цифр (никогда не повторяется в этой сессии)
 function generateOrderNumber(){
@@ -1111,9 +1276,9 @@ async function submitOrder(e){
     name: document.getElementById('ordName').value.trim(),
     surname: document.getElementById('ordSurname').value.trim(),
     phone: document.getElementById('ordPhone').value.trim(),
-    region: document.getElementById('ordRegion').value.trim(),
-    city: document.getElementById('ordCity').value.trim(),
-    branch: document.getElementById('ordBranch').value.trim(),
+    region: novaPoshtaConfigured ? '' : document.getElementById('ordRegion').value.trim(),
+    city: novaPoshtaConfigured ? document.getElementById('npCityInput').value.trim() : document.getElementById('ordCity').value.trim(),
+    branch: novaPoshtaConfigured ? document.getElementById('npWarehouseSelect').value : document.getElementById('ordBranch').value.trim(),
     payment: document.querySelector('input[name="pay"]:checked').value,
   };
 
@@ -1127,6 +1292,7 @@ async function submitOrder(e){
       productId: p.id,
       name: productName(p),
       color: colorName(p.colors[c.colorIndex]),
+      size: (p.sizes && p.sizes.length) ? p.sizes[c.sizeIndex] : null,
       qty: c.qty,
       price: p.price,
       sum: sum,
@@ -1181,7 +1347,7 @@ function renderFooter(){
       <h4>${t('footerShop')}</h4>
       <button class="link" onclick="showCatalog('all')">${t('catalog')}</button>
       <button class="link" onclick="showAbout()">${t('aboutUs')}</button>
-      <button class="link" onclick="toggleDropdown('contactsDD')">${t('contacts')}</button>
+      <button class="link" onclick="openContactsModal()">${t('contacts')}</button>
     </div>
     <div class="footer-col">
       <h4>${t('footerReviews')}</h4>
@@ -1207,9 +1373,9 @@ async function init(){
   // восстанавливаем корзину и избранное, сохранённые в этом браузере ранее
   loadStateFromStorage();
   // показываем состояние загрузки, пока идёт запрос к Supabase
-  document.getElementById('productGrid').innerHTML = `<div class="loading-state">Загрузка товаров...</div>`;
+  document.getElementById('productGrid').innerHTML = `<div class="loading-state">Завантаження товарів...</div>`;
   await loadProducts();
-  setLang('ru');
+  applyStaticText();
   renderCatStrip();
   renderCatalog();
   updateCartBadge();
