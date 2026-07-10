@@ -297,9 +297,13 @@ footer.site-footer{
 /* ==================== ВСПОМОГАТЕЛЬНОЕ ==================== */
 @media(max-width:640px){
   .header-top{gap:8px;}
-  .logo-btn span{display:none;}
+  .logo-btn img{width:36px;height:36px;}
+  .logo-btn span{font-size:15px;}
   .search-wrap{order:3;flex-basis:100%;max-width:100%;}
-  .nav-btn span.txt{display:none;}
+  .nav-item.desktop-only{display:none;} /* Про нас / Контакти — уже продублированы внутри каталога */
+  #catalogNavBtn{padding:9px 12px;}
+  #catalogNavBtn .hamburger-icon{font-size:21px;line-height:1;}
+  #catalogNavBtn .txt{font-size:14px;}
 }
 </style>
 </head>
@@ -324,7 +328,7 @@ footer.site-footer{
       <!-- каталог с категориями (на телефоне это единственная видимая кнопка навигации,
            поэтому сюда же продублированы ссылки "Про нас" и "Контакты") -->
       <div class="nav-item">
-        <button class="nav-btn" onclick="toggleDropdown('catalogDD')">☰ <span class="txt">Каталог</span></button>
+        <button class="nav-btn" id="catalogNavBtn" onclick="toggleDropdown('catalogDD')"><span class="hamburger-icon">☰</span> <span class="txt">Каталог</span></button>
         <div class="dropdown wide hidden" id="catalogDD">
           <div class="dropdown-title">Категорії</div>
           <div class="catalog-grid" id="catalogGrid"></div>
@@ -336,13 +340,13 @@ footer.site-footer{
         </div>
       </div>
 
-      <!-- про нас -->
-      <div class="nav-item">
+      <!-- про нас (на телефоне скрыто — уже продублировано внутри каталога) -->
+      <div class="nav-item desktop-only">
         <button class="nav-btn" onclick="showAbout()"><span class="txt">Про нас</span></button>
       </div>
 
-      <!-- контакти: открываются отдельным модальным окном -->
-      <div class="nav-item">
+      <!-- контакти (на телефоне скрыто — уже продублировано внутри каталога) -->
+      <div class="nav-item desktop-only">
         <button class="nav-btn" onclick="openContactsModal()"><span class="txt">Контакти</span></button>
       </div>
 
@@ -825,6 +829,49 @@ function onSearch(val){
   showView('viewCatalog');
 }
 
+/* =========================================================================
+   ПОИСК С УЧЁТОМ ОПЕЧАТОК
+   Считаем "расстояние редактирования" между словами — сколько букв нужно
+   заменить/добавить/убрать, чтобы получить одно слово из другого.
+   Чем длиннее слово, тем больше опечаток разрешаем.
+   ========================================================================= */
+function levenshteinDistance(a, b){
+  const m = a.length, n = b.length;
+  if(m === 0) return n;
+  if(n === 0) return m;
+  const dp = Array.from({length: m+1}, (_, i) => [i, ...Array(n).fill(0)]);
+  for(let j=0; j<=n; j++) dp[0][j] = j;
+  for(let i=1; i<=m; i++){
+    for(let j=1; j<=n; j++){
+      const cost = a[i-1] === b[j-1] ? 0 : 1;
+      dp[i][j] = Math.min(
+        dp[i-1][j] + 1,      // удаление
+        dp[i][j-1] + 1,      // вставка
+        dp[i-1][j-1] + cost  // замена
+      );
+    }
+  }
+  return dp[m][n];
+}
+
+// проверяет, "похож ли" текст на поисковый запрос — с допуском на опечатки
+function fuzzyIncludes(text, query){
+  text = text.toLowerCase();
+  query = query.toLowerCase().trim();
+  if(!query) return true;
+  if(text.includes(query)) return true; // точное совпадение — быстрый путь
+
+  const textWords = text.split(/\s+/).filter(Boolean);
+  const queryWords = query.split(/\s+/).filter(Boolean);
+
+  // каждое слово из запроса должно найти похожее слово в названии товара
+  return queryWords.every(qw => textWords.some(tw=>{
+    if(tw.includes(qw) || qw.includes(tw)) return true;
+    const maxDist = qw.length <= 4 ? 1 : (qw.length <= 8 ? 2 : 3); // допустимое число опечаток
+    return levenshteinDistance(qw, tw) <= maxDist;
+  }));
+}
+
 function renderCatalog(){
   renderCatStrip();
   document.getElementById('catalogTitle').textContent = currentSearch
@@ -834,7 +881,7 @@ function renderCatalog(){
 
   let list = PRODUCTS.filter(p=>{
     const matchCat = currentCategory==='all' || p.category===currentCategory;
-    const matchSearch = !currentSearch || productName(p).toLowerCase().includes(currentSearch);
+    const matchSearch = !currentSearch || fuzzyIncludes(productName(p), currentSearch);
     return matchCat && matchSearch;
   });
 
